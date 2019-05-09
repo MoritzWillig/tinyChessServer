@@ -1,0 +1,19 @@
+{
+  "name": "tinyChessServer",
+  "version": "1.0.0",
+  "description": "simple server for chess games",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chess",
+    "chess server"
+  ],
+  "author": "Moritz Willig",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.4",
+    "ws": "^7.0.0"
+  }
+}
