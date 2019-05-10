@@ -1,0 +1,93 @@
+
+:root {
+  --brightCell: #fec;
+  --darkCell: #c80;
+  
+  --cellHeight: 50px;
+}
+
+body {
+  margin: 0px;
+}
+
+div {
+  margin: 0px;
+}
+
+.board {
+  display: inline-block;
+  border: 2px solid #f80;
+}
+
+.pocket {
+  display: inline-block;
+  border: 2px solid #f80;
+  
+  width: 100px;
+  height: 200px;
+}
+
+.boardCell {
+  display: inline-block;
+  width: var(--cellHeight);
+  height: var(--cellHeight);
+  
+  cursor: pointer;
+  
+  font-size: calc(var(--cellHeight) * 0.9);
+  line-height: var(--cellHeight);
+  
+  float: left;
+  
+  text-align: center;
+  vertical-align: top;
+  
+  overflow: hidden;
+}
+
+.boardRow {
+  height: var(--cellHeight);
+}
+
+.boardRow:nth-child(odd) > .boardCell:nth-child(odd) {
+  background: var(--brightCell);
+}
+
+.boardRow:nth-child(odd) > .boardCell:nth-child(even) {
+  background: var(--darkCell);
+}
+
+.boardRow:nth-child(even) > .boardCell:nth-child(odd) {
+  background: var(--darkCell);
+}
+
+.boardRow:nth-child(even) > .boardCell:nth-child(even) {
+  background: var(--brightCell);
+}
+
+.boardRow:nth-child(odd) > .boardCell:nth-child(odd).flipped {
+  background: var(--darkCell);
+}
+
+.boardRow:nth-child(odd) > .boardCell:nth-child(even).flipped {
+  background: var(--brightCell);
+}
+
+.boardRow:nth-child(even) > .boardCell:nth-child(odd).flipped {
+  background: var(--brightCell);
+}
+
+.boardRow:nth-child(even) > .boardCell:nth-child(even).flipped {
+  background: var(--darkCell);
+}
+
+#menu {
+  height: 30px;
+  background-color: #830;
+  border-bottom: 1px solid #000;
+}
+
+#content {
+  padding: 5px;
+  text-align: center;
+}

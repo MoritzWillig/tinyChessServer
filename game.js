@@ -8,6 +8,19 @@ class Game {
   constructor(clients) {
     this.board = new Board();
     this.clients = clients;
+    
+    this.broadcast("new");
+    this.broadcast("variant bughouse");
+  }
+  
+  registerMove(moveStr) {
+    //...
+  }
+  
+  broadcast(message) {
+    for (let client of this.clients) {
+      client.send(message);
+    }
   }
 }
 

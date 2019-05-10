@@ -23,18 +23,19 @@ const gameserver = new GameServer();
 let webserver = null;
 if (config["webserver"]["enabled"] === true) {
   webserver = new WebServer();
+  webserver.listen(config["webserver"]);
 }
 
 gameserver.on("game.new", function() {
-  gameserver.
+  gameserver.newGame();
 });
 
 gameserver.on("game.update", function() {
-  asdf
+  //asdf
 });
 
 gameserver.on("game.end", function() {
-  asdf
+  //asdf
 });
 
 gameserver.on("server.close", function() {
@@ -45,7 +46,7 @@ gameserver.on("server.close", function() {
   process.exit(0);
 });
 
-
+/*
 let readline = require('readline');
 let rl = readline.createInterface({
   input: process.stdin,
@@ -57,6 +58,6 @@ rl.on('line', (line) => {
   gameserver.processMessage("console", line.trim());
 }).on('close', () => {
   gameserver.processMessage("console", "close");
-});
+});*/
 
 
