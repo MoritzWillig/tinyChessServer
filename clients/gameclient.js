@@ -5,7 +5,7 @@ class GameClient {
     this._state = "unknown";
   }
   
-  send(message) {
+  sendMessage(message) {
     //...
   }
   
@@ -15,6 +15,14 @@ class GameClient {
   
   setState(state) {
     this._state = state;
+  }
+  
+  on(eventName, eventHandler) {
+    //...
+  }
+  
+  doEvent(eventName, data) {
+    //...
   }
 }
 
