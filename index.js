@@ -1,6 +1,10 @@
 const GameServer = require("./gameserver");
 const WebServer = require("./webserver");
+const WebSocketGameServer = require("./clients/websocket");
+
+const http = require('http');
 const fs = require("fs");
+const readline = require('readline');
 
 config = JSON.parse(fs.readFileSync("./config.json"));
 
@@ -17,47 +21,54 @@ config = JSON.parse(fs.readFileSync("./config.json"));
 **/
 
 
-const gameserver = new GameServer();
+const gameserver = new GameServer(() => {
+  //TODO create new game here
+  let game = null;
+  return game;
+}, config["game"]);
 
-
+let httpServer = null;
 let webserver = null;
-if (config["webserver"]["enabled"] === true) {
-  webserver = new WebServer();
-  webserver.listen(config["webserver"]);
+let websocketserver = null;
+
+if (config["httpServer"]["serve_webclient"] === true) {
+  webserver = new WebServer(config["httpServer"]);
 }
 
-gameserver.on("game.new", function() {
-  gameserver.newGame();
-});
+if (config["httpServer"]["enabled"] === true) {
+  httpServer = http.createServer(webserver.getApp());
+}
 
-gameserver.on("game.update", function() {
-  //asdf
-});
+if (config["clients"]["websocket"]["enabled"] === true) {
+  websocketserver = new WebSocketGameServer(httpServer, config["clients"]["websocket"]);
+  websocketserver.on("client.new", (client) => {
+    if (!gameserver.addClient(client)) {
+      client.close();
+    }
+  });
+}
 
-gameserver.on("game.end", function() {
-  //asdf
-});
+httpServer.listen(config["httpServer"]["port"]);
+
 
 gameserver.on("server.close", function() {
-  if (webserver !==null) {
-    webserver.close();
-  }
   console.log("closing the server");
+  if (httpServer !== null) {
+    httpServer.close();
+  }
   process.exit(0);
 });
 
-/*
-let readline = require('readline');
+
 let rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout,
-  terminal: false
+  output: process.stdout
 });
 
 rl.on('line', (line) => {
   gameserver.processMessage("console", line.trim());
 }).on('close', () => {
   gameserver.processMessage("console", "close");
-});*/
+});
 
 

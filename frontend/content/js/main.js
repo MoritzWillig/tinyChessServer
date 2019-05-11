@@ -116,3 +116,13 @@ function init() {
   boardA = new Board("#boardA", "#pocketA");
   boardB = new Board("#boardB", "#pocketB", true);
 }
+
+var ws=null;
+function connect() {
+  if (ws!==null) {
+    return;
+  }
+  
+  ws = new WebSocket("ws://127.0.0.1:80/websocketclient");
+}
+

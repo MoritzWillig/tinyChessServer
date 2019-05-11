@@ -2,19 +2,22 @@
   "appname": "tinyChessServer",
   
   "game": {
-    "variant": "bughouse"
+    "variant": "bughouse",
+    "time": 30000
   },
   
-  "webserver": {
+  "httpServer": {
     "enabled": true,
     "port": 80,
+    
+    "serve_webclient": true,
     "static_dir": "./frontend"
   },
   
   "clients": {
     "websocket": {
       "enabled": true,
-      "port": 8080
+      "path": "/websocketclient"
     }
   }
 }
