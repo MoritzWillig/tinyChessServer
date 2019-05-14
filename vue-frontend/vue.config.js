@@ -6,6 +6,7 @@ module.exports = {
         target: 'ws://localhost:80',
         secure: false,
         ws: true,
+        changeOrigin: true,
       }
     }
   }

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="chessboard-wrapper">
-      <GameClock :name="engineNames[0]" :time="250"/>
+      <GameClock :name="engineNames[0]" :time="0"/>
       <ChessPocket class="bottom-margin" color="black" :pieces="pieces"/>
       <chessboard/>
       <ChessPocket/>

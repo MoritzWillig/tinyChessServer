@@ -4,7 +4,7 @@
       {{name}}
     </div>
     <div class="clock-border">
-      12:50
+      {{timeAsString}}
     </div>
     <div class="name" v-if="align == 'left'">
       {{name}}
@@ -29,6 +29,23 @@ export default {
       type: String,
       default: "left"
     },
+  },
+  computed: {
+    timeAsString: function () {
+      var ms = this.time % 1000;
+      var s = (this.time - ms) / 1000;
+      var secs = s % 60;
+      s = (s - secs) / 60;
+      var mins = s % 60;
+      var hrs = (s - mins) / 60;
+
+      var pad = function (n) {
+          return (n < 10) ? ("0" + n) : n;
+      }
+
+      // return hrs + ':' + mins + ':' + secs + '.' + ms;
+      return pad(mins) + ':' + pad(secs);
+    }
   }
 }
 </script>
