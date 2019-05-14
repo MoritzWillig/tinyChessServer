@@ -1,28 +1,38 @@
 <template>
   <div>
     <div class="chessboard-wrapper">
+      <GameClock :name="engineNames[0]" :time="250"/>
+      <ChessPocket class="bottom-margin" color="black" :pieces="pieces"/>
       <chessboard/>
       <ChessPocket/>
+      <GameClock align="right" :name="engineNames[1]" :time="250"/>
     </div>
     <div class="chessboard-wrapper">
+      <GameClock :name="engineNames[2]" :time="250"/>
+      <ChessPocket class="bottom-margin" :pieces="pieces"/>
       <chessboard orientation="black"/>
       <ChessPocket color="black" :pieces="pieces"/>
+      <GameClock align="right" :name="engineNames[3]" :time="250"/>
     </div>
   </div>
 </template>
 
 <script>
 import ChessPocket from './ChessPocket'
+import GameClock from './GameClock'
 import {chessboard} from 'vue-chessboard'
 import 'vue-chessboard/dist/vue-chessboard.css'
 
 export default {
   name: 'GameBoards',
   components: {
-    chessboard, ChessPocket
+    chessboard, ChessPocket, GameClock
   },
   props: {
-    msg: String
+    engineNames: {
+      type: Array,
+      default: () => ["Engine 1", "Engine 2", "Engine 3", "Engine 4"]
+    }
   },
   data () {
     return {
@@ -37,5 +47,8 @@ export default {
 .chessboard-wrapper {
   display: inline-block;
   margin: 1em 3em;
+}
+.bottom-margin {
+  margin-bottom: 1em;
 }
 </style>
