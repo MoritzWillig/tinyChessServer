@@ -3,14 +3,14 @@
     <div class="chessboard-wrapper">
       <GameClock :name="engineNames[0]" :time="0"/>
       <ChessPocket class="bottom-margin" color="black" :pieces="pieces"/>
-      <chessboard/>
+      <chessboard :fen="boards['boardA']"/>
       <ChessPocket/>
       <GameClock align="right" :name="engineNames[1]" :time="250"/>
     </div>
     <div class="chessboard-wrapper">
       <GameClock :name="engineNames[2]" :time="250"/>
       <ChessPocket class="bottom-margin" :pieces="pieces"/>
-      <chessboard orientation="black"/>
+      <chessboard orientation="black" :fen="boards['boardB']"/>
       <ChessPocket color="black" :pieces="pieces"/>
       <GameClock align="right" :name="engineNames[3]" :time="250"/>
     </div>
@@ -27,6 +27,11 @@ export default {
   name: 'GameBoards',
   components: {
     chessboard, ChessPocket, GameClock
+  },
+  computed: {
+    boards () {
+      return this.$store.state.boards
+    }
   },
   props: {
     engineNames: {
