@@ -124,5 +124,22 @@ function connect() {
   }
   
   ws = new WebSocket("ws://127.0.0.1:80/websocketclient");
+  
+  ws.onmessage = (event) => {
+    let message = event.data;
+    
+    let idx = message.indexOf(" ");
+    let command = (idx!=-1)?message.slice(0, idx):message;
+    
+    console.log("[server] "+message);
+    switch (command) {
+      case "xboard":
+        break;
+      case "protover":
+        ws.send("feature san=1, time=1, variants=\"bughouse\", otherboard=1, colors=1, time=1, done=1");
+        break;
+      //case
+    }
+  };
 }
 

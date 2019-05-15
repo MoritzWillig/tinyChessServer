@@ -27,16 +27,16 @@ while True:
     break;
   
   if command=="close":
-    print("closing")
+    print("closing", flush=True)
     break
     
   if command=="new":
-    print("new")
+    print("new", flush=True)
     board = chess.variant.BughouseBoards()
     continue
     
   if command=="fen":
-    print(board.bfen)
+    print(board.bfen, flush=True)
     continue
   
   # the command is a move: <board> ">" <uci move>
@@ -48,19 +48,19 @@ while True:
       else:
         single_board = board[1]
     else:
-      print("rejected")
+      print("rejected", flush=True)
       continue
     
     move = chess.Move.from_uci(command[2:])
-  except Exception as e:
-    print("rejected", e)
+  except:
+    print("rejected", flush=True)
     continue
   
   if not move in single_board.legal_moves:
-    print("illegal")
+    print("illegal", flush=True)
   else:
     single_board.push(move)
     if board.is_game_over():
-      print("ok:"+board.result())
+      print("ok:"+board.result(), flush=True)
     else:
-      print("ok")
+      print("ok", flush=True)

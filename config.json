@@ -3,7 +3,9 @@
   
   "game": {
     "variant": "bughouse",
-    "time": 30000
+    "time": 30000,
+    "backend_command": "python -u chessBackend.py",
+    "backend_cwd": "./backend/"
   },
   
   "httpServer": {
