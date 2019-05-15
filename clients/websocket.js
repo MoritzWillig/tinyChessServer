@@ -24,7 +24,7 @@ class WebSocketGameServer {
     this.wss.on('connection', (ws) => {
       let wsgc = new WebSocketGameClient(ws);
       wsgc.on("connection.close", (client) => {
-        this.clients.remove(client);
+        this.clients.splice(client, 1);
       });
       this.clients.push(wsgc);
       this.doEvent("client.new", wsgc);
@@ -83,25 +83,24 @@ class WebSocketGameClient extends GameClient {
           if (command === "feature") {
             //TODO we should check the requested features ...
             this.sendMessage("accepted");
+            this.sendMessage("#waiting for other players");
             this.setState("ready");
             this.doEvent("client.ready");
           }
           break;
         case "ready":
+          this.doEvent("client.game.message", { client:this, message:message});
           break;
-        case "playing":
-          this.doEvent("client.game.message", message);
       }
     });
     
     ws.on('close', (code, reason) => {
       this.doEvent("connection.close", {code: code, reason: reason});
     });
-    
   }
   
   sendMessage(message) {
-    this.ws.send(message+"\n");
+    this.ws.send(message);
   }
   
   close() {

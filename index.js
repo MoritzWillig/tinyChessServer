@@ -1,4 +1,5 @@
 const GameServer = require("./gameserver");
+const Games = require("./games.js");
 const WebServer = require("./webserver");
 const WebSocketGameServer = require("./clients/websocket");
 
@@ -9,21 +10,18 @@ const readline = require('readline');
 config = JSON.parse(fs.readFileSync("./config.json"));
 
 /**
+ * TODO
  * command line arguments:
  * --help
  *    prints help
  * --gui
  *    enables the web gui
- * --client web|cli|tcp
- *    registeres
- * --single
- *    plays a single game and quits the application
 **/
 
 
 const gameserver = new GameServer(() => {
   //TODO create new game here
-  let game = null;
+  let game = new Games.ChessCLIGame(config["game"]);
   return game;
 }, config["game"]);
 
