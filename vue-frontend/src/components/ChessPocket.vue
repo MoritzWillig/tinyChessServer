@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
-    <div class="slot" :style="{ color: color }" v-for="(piece, indx) in pieces" :key="indx">
-      <div class="piece" :class="[piece, color]"></div>
+    <div class="slot" :style="{ color: color }" v-for="piece in pieces" :key="piece.type">
+      <div class="piece" @click="$emit('selection', piece)" :class="[piece.type, color, piece.selected]"></div>
     </div>
     <div class="slot" v-for="indx in emptySlots" :key="indx">
     </div>
@@ -34,6 +34,7 @@ export default {
 <style scoped>
 .wrapper {
   text-align: left;
+  cursor: pointer;
 }
 
 .slot {
@@ -52,6 +53,10 @@ div.wrapper > .slot:nth-of-type(odd) {
   height: 40px;
   width: 40px;
   background-size: 40px;
+}
+
+.piece.selected {
+  background-color: rgb(112, 201, 146);
 }
 
 .wrapper .piece.pawn.white {

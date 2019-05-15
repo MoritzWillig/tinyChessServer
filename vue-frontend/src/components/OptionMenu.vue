@@ -2,6 +2,7 @@
   <div>
     <div class="option-wrapper" v-if="currentOption">
       <div class="options">
+        <div class="alert-box" v-if="websocketConnection.readyState != 1">Websocket not connected!</div>
         <input type="text" placeholder="Name@Server" v-model="nameInput"/>
         <a class="button" @click="joinServer">Join</a>
         <a class="button" @click="currentOption = ''">Cancel</a>
@@ -25,13 +26,15 @@ export default {
     }
   },
   computed: {
-    count () {
+    websocketConnection () {
       return this.$store.state.ws
     }
   },
   methods: {
     joinServer() {
-      console.log(this.count)
+      console.log(this.websocketConnection)
+      console.log()
+      this.websocketConnection.send('game_ended')
     }
   }
 }

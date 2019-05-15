@@ -46,4 +46,12 @@ export default {
   border: 1px solid rgb(202, 202, 202);
   cursor: default;
 }
+
+.alert-box {
+  background-color: yellow;
+  border: 2px solid black;
+  border-radius: 5px;
+  margin: 1em;
+  padding: 1em;
+}
 </style>
