@@ -1,7 +1,8 @@
 <template>
-  <div class="wrapper">
+  <div class="wrapper" :class="[enabled ? 'enabled' : '']">
     <div class="slot" :style="{ color: color }" v-for="piece in pieces" :key="piece.type">
-      <div class="piece" @click="$emit('selection', piece)" :class="[piece.type, color, piece.selected]"></div>
+      <div class="piece" @click="enabled ? $emit('selection', piece) : ''" :class="[piece.type, color, piece.selected]"></div>
+      <div class="piece-count">{{piece.count}}</div>
     </div>
     <div class="slot" v-for="indx in emptySlots" :key="indx">
     </div>
@@ -26,6 +27,10 @@ export default {
       type: Array,
       default: () => ([])
     },
+    enabled: {
+      type: Boolean,
+      default: false
+    }
   }
 }
 </script>
@@ -34,7 +39,18 @@ export default {
 <style scoped>
 .wrapper {
   text-align: left;
+}
+
+.wrapper.enabled {
   cursor: pointer;
+}
+
+.piece-count {
+  text-align: center;
+  font-size: 10px;
+  padding: 2px;
+  background-color: rgb(221, 221, 221);
+  color: black;
 }
 
 .slot {

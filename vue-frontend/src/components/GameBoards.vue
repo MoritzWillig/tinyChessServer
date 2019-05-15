@@ -2,11 +2,11 @@
   <div>
     <div class="chessboard-wrapper">
       <GameClock :name="engineNames[0]" :time="0"/>
-      <ChessPocket @selection="selectPocketPiece" class="bottom-margin" color="black" :pieces="pieces"/>
+      <ChessPocket :enabled="turnColor === 'black'" @selection="selectPocketPiece" class="bottom-margin" color="black" :pieces="pieces"/>
       <div @click="getBoardPos">
         <chessboard @onMove="setNewFen" :fen="boards['boardA']"/>
       </div>
-      <ChessPocket/>
+      <ChessPocket :enabled="turnColor === 'white'" @selection="selectPocketPiece"  :pieces="pieces"/>
       <GameClock align="right" :name="engineNames[1]" :time="250"/>
     </div>
     <div class="chessboard-wrapper">
@@ -18,6 +18,7 @@
       <ChessPocket color="black" :pieces="pieces"/>
       <GameClock align="right" :name="engineNames[3]" :time="250"/>
     </div>
+    {{turnColor}}
   </div>
 </template>
 
@@ -35,6 +36,9 @@ export default {
   computed: {
     boards () {
       return this.$store.state.boards
+    },
+    turnColor () {
+      return this.boards['boardA'].includes(" w ") ? 'white' : 'black';
     }
   },
   props: {
@@ -45,7 +49,8 @@ export default {
   },
   data () {
     return {
-      pieces: [{'type': 'queen', 'count': 1, 'selected': 'no'}, {'type': 'rook', 'count': 1, 'selected': 'no'}]
+      pieces: [{'type': 'queen', 'count': 1, 'selected': 'no'}, {'type': 'rook', 'count': 1, 'selected': 'no'}, {'type': 'pawn', 'count': 4, 'selected': 'no'}],
+      selectedPiece: null
     }
   },
   methods: {
@@ -54,8 +59,10 @@ export default {
         if(piece.type === element.type) {
           if (element.selected === 'selected') {
             element.selected = 'no'
+            this.selectedPiece = null
           } else {
             element.selected = 'selected'
+            this.selectedPiece = element.type
           }
         } else {
           element.selected = 'no'
@@ -66,13 +73,26 @@ export default {
       this.pieces.forEach(element => {
         element.selected = 'no'
       });
+      this.selectedPiece = null
+    },
+    removeFromPocket(type){
+      this.pieces.forEach(element => {
+        if(type === element.type) {
+          if(element.count == 1){
+            this.pieces = this.pieces.filter(function(value){
+              return value.type !== type;
+            });
+          } else {
+            element.count -= 1;
+          }
+        }
+      });
     },
     getBoardPos(event) {
-      if (event.explicitOriginalTarget.className === "cg-board") {
+      if (event.explicitOriginalTarget.className === "cg-board" && this.selectedPiece) {
         var x = Math.floor(event.layerX / 40);
         var y = Math.floor(event.layerY / 40)
         var oldFen = this.boards['boardA']
-        console.log(oldFen)
         var stringPos = y * 9 + x
 
         var replaceAt = (str, index, replacement) => {
@@ -87,8 +107,29 @@ export default {
         oldFen = oldFen.replace(new RegExp('3', 'g'), '111');
         oldFen = oldFen.replace(new RegExp('2', 'g'), '11');
 
-        var newFen = replaceAt(oldFen, stringPos, 'r')
-
+        var newFen = oldFen
+        switch (this.selectedPiece) {
+          case 'queen':
+            newFen = replaceAt(oldFen, stringPos, this.turnColor === 'white' ? 'Q':'q')
+            break;
+          case 'rook':
+            newFen = replaceAt(oldFen, stringPos, this.turnColor === 'white' ? 'R':'r')
+            break;
+          case 'bishop':
+            newFen = replaceAt(oldFen, stringPos, this.turnColor === 'white' ? 'B':'b')
+            break;
+          case 'knight':
+            newFen = replaceAt(oldFen, stringPos, this.turnColor === 'white' ? 'N':'n')
+            break;
+          case 'pawn':
+            newFen = replaceAt(oldFen, stringPos, this.turnColor === 'white' ? 'P':'p')
+            break;
+          default:
+            break;
+        }
+        this.removeFromPocket(this.selectedPiece)
+        this.deselectPocketPieces()
+        
         newFen = newFen.replace(new RegExp('11111111', 'g'), '8');
         newFen = newFen.replace(new RegExp('1111111', 'g'), '7');
         newFen = newFen.replace(new RegExp('111111', 'g'), '6');
@@ -96,12 +137,23 @@ export default {
         newFen = newFen.replace(new RegExp('1111', 'g'), '4');
         newFen = newFen.replace(new RegExp('111', 'g'), '3');
         newFen = newFen.replace(new RegExp('11', 'g'), '2');
-        console.log(newFen)
         this.setNewFen({'fen': newFen})
+        // this.changeTurnColor();
       }
       else {
         this.deselectPocketPieces();
       }
+    },
+    changeTurnColor () {
+        var oldFen = this.boards['boardA']
+        console.log(oldFen)
+        if (this.turnColor == 'white') {
+          oldFen = oldFen.replace(new RegExp(' w ', 'g'), ' b ');
+        } else {
+          oldFen = oldFen.replace(new RegExp(' b ', 'g'), ' w ');
+        }
+        console.log(oldFen)
+        this.setNewFen({'fen': oldFen})
     },
     setNewFen(event) {
       this.$store.commit('setNewFen', ['boardA', event.fen])
@@ -117,6 +169,6 @@ export default {
   margin: 1em 3em;
 }
 .bottom-margin {
-  margin-bottom: 1em;
+  margin-bottom: 1.5em;
 }
 </style>
