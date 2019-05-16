@@ -1,5 +1,5 @@
 import os
-os.sys.path.append(os.path.abspath("./python-chess"))
+os.sys.path.insert(0, os.path.abspath("./python-chess"))
 
 import sys
 import chess.variant
