@@ -10,7 +10,7 @@ $ npm install
  3. Start server (the port used in defined in config.js)
  ```
  node index.js
- `` 
+ ```
  
  4. Open a new wepage with `http://localhost:<port>/`
  
