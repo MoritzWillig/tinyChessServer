@@ -259,20 +259,20 @@ class GameServer {
             //to be valid.
             this.timers = {
               "a": [{
-                "remaining": this.config["time"],
+                "remaining": this.config["time"] * 1000,
                 "lastStart": (+new Date()),
                 "paused": false
               }, {
-                "remaining": this.config["time"],
+                "remaining": this.config["time"] * 1000,
                 "lastStart": null,
                 "paused": false
               }],
               "b": [{
-                "remaining": this.config["time"],
+                "remaining": this.config["time"] * 1000,
                 "lastStart": (+new Date()),
                 "paused": false
               }, {
-                "remaining": this.config["time"],
+                "remaining": this.config["time"] * 1000,
                 "lastStart": null,
                 "paused": false
               }],
@@ -296,11 +296,11 @@ class GameServer {
             
             //broadcast results
             let result = data.result;
-            this.broadcast(result+" {one of the players was mated D:}");
-            //data.playerMated otherwise by time
+            let byMate = data.playerMated;
+            this.broadcast(result+" "+(byMate?"{one of the players was mated D:}":"{time run out}"));
             
             this.state="ready";
-            this.broadcast("#the game is ready to start. Type 'go' to start a new game");
+            console.log("#the game is ready to start. Type 'go' to start a new game");
             break;
           case "client_game_message":
             this._processClientGameMessage(data.client, data.message);
@@ -334,7 +334,7 @@ class GameServer {
     }
     
     for (let board of boards) {
-      let onTheMove = (this.turns["board"] == "white")?0:1;
+      let onTheMove = (this.turns[board] == "white")?0:1;
       
       let clock = this.timers[board][onTheMove];
       
@@ -344,7 +344,6 @@ class GameServer {
       }
       
       let timePassed = currentTime - clock["lastStart"];
-      
       if (clock["remaining"] - timePassed <= 0) {
         //time run out
         this._processStateMessage("game_ended", { result: `${onTheMove}-${1-onTheMove}`, playerMated: false });
