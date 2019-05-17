@@ -6,20 +6,14 @@ const WebSocket = require('ws');
 
 class WebSocketGameServer {
   
-  constructor(server, config) {
+  constructor() {
     this._events = {
       "client.new": []
     };
     
     this.clients = [];
     
-    this.wss = new WebSocket.Server({
-      path: config["path"],
-      server: server,
-      verifyClient: (info) => {
-        return true;
-      }
-    });
+    this.wss = new WebSocket.Server({ noServer: true });
     
     this.wss.on('connection', (ws) => {
       let wsgc = new WebSocketGameClient(ws);
@@ -29,6 +23,10 @@ class WebSocketGameServer {
       this.clients.push(wsgc);
       this.doEvent("client.new", wsgc);
     });
+  }
+  
+  getServer() {
+    return this.wss;
   }
   
   on(eventName, eventHandler) {

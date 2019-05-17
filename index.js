@@ -4,6 +4,7 @@ const WebServer = require("./webserver");
 const WebSocketGameServer = require("./clients/websocket");
 
 const http = require('http');
+const url = require('url');
 const fs = require("fs");
 const readline = require('readline');
 
@@ -27,20 +28,19 @@ const gameserver = new GameServer(() => {
 
 let httpServer = null;
 let webserver = null;
+
 let websocketserver = null;
-let websocketObserverServerA = null;
-let websocketObserverServerB = null;
+let websocketBoardAObserverServer = null;
+let websocketBoardBObserverServer = null;
 
 if (config["httpServer"]["serve_webclient"] === true) {
   webserver = new WebServer(config["httpServer"]);
 }
 
-if (config["httpServer"]["enabled"] === true) {
-  httpServer = http.createServer(webserver.getApp());
-}
+httpServer = http.createServer(webserver.getApp());
 
 if (config["clients"]["websocket"]["enabled"] === true) {
-  websocketserver = new WebSocketGameServer(httpServer, config["clients"]["websocket"]);
+  websocketserver = new WebSocketGameServer();
   websocketserver.on("client.new", (client) => {
     if (!gameserver.addClient(client)) {
       client.close();
@@ -51,31 +51,46 @@ if (config["clients"]["websocket"]["enabled"] === true) {
 }
 
 //observers
-/*if (config["observers"]["websocket"]["enabled"] === true) {
-  let configA = Object.assign({}, config["observers"]["websocket"]);
-  configA["path"] = configA["boardA"];
-  
-  websocketObserverServerA = new WebSocketGameServer(httpServer, configA);
-  websocketObserverServerA.on("client.new", (client) => {
+if (config["observers"]["websocket"]["enabled"] === true) {
+  websocketBoardAObserverServer = new WebSocketGameServer();
+  websocketBoardAObserverServer.on("client.new", (client) => {
     if (!gameserver.addObserver("a", client)) {
       client.close();
     }
   });
-
-  let configB = Object.assign({}, config["observers"]["websocket"]);
-  configB["path"] = configB["boardB"];
   
-  websocketObserverServerB = new WebSocketGameServer(httpServer, configB);
-  websocketObserverServerB.on("client.new", (client) => {
+  websocketBoardBObserverServer = new WebSocketGameServer();
+  websocketBoardBObserverServer.on("client.new", (client) => {
     if (!gameserver.addObserver("b", client)) {
       client.close();
     }
   });
-}*/
+}
 
+httpServer.on('upgrade', function upgrade(request, socket, head) {
+  const pathname = url.parse(request.url).pathname;
 
+  if (pathname === config["clients"]["websocket"]["path"]) {
+      let wss = websocketserver.getServer();
+      wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit('connection', ws, request);
+    });
+  } else if (pathname === config["observers"]["websocket"]["pathBoardA"]) {
+      let wss = websocketBoardAObserverServer.getServer();
+      wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit('connection', ws, request);
+    });
+  } else if (pathname === config["observers"]["websocket"]["pathBoardB"]) {
+      let wss = websocketBoardBObserverServer.getServer();
+      wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    console.log("rejected", pathname);
+    socket.destroy();
+  }
+});
 httpServer.listen(config["httpServer"]["port"]);
-
 
 gameserver.on("server.close", function() {
   console.log("closing the server");

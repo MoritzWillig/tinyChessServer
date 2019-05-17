@@ -121,28 +121,26 @@ class GameServer {
   addObserver(boardName, client) {
     console.log("[server] registering a new observer");
     
-    board = this.observers[boardName];
+    let board = this.observers[boardName];
     board.push(client);
     
-    client.on("client.ready", (client) => {
+    client.on("client.ready", () => {
       // send current board state
       this._queueGameMessage("fen", boardName, answer => {
         client.sendMessage('new');
         client.sendMessage("variant bughouse");
         client.sendMessage("force");
         client.sendMessage('setboard '+answer);
-        
-        client.setState("listening");
       });
     });
     
-    client.on("client.close", (client) => {
+    client.on("connection.close", (client) => {
       board.splice(board.indexOf(client), 1);
     });
     
     //observer messages are ignored (only needed for the handshake)
     client.on("client.game.message", data => {
-      this._processObserverMessage("client_observer_message", { board: boardName, client: data.client, message: data.message});
+      this._processStateMessage("client_observer_message", { board: boardName, client: data.client, message: data.message});
     });
     
     //client.on("client.game.needs_state", (client) => {

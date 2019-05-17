@@ -64,12 +64,12 @@ class ChessCLIGame extends Game {
   makeMove(moveStr) {
     //only single lines are accepted
     if (moveStr.indexOf("\n") != -1) {
-      //answer rejected
+      //TODO answer rejected
     }
     
     //filter command strings
     if ((moveStr == "new") || (moveStr == "close") || (moveStr == "fen") || (moveStr == "fen a") || (moveStr == "fen b")) {
-      //answer "rejected"
+      //TODO answer "rejected"
     }
     this._sendMessage(moveStr+"\n");
   }
@@ -84,10 +84,10 @@ class ChessCLIGame extends Game {
       return;
     }
     
-    if ((board != "a") && (board != "b")) {
+    if ((board == "a") || (board == "b")) {
       this._sendMessage("fen "+board+"\n");
     } else {
-      //answer rejected
+      throw new Error("invalid board name: "+board);
     }
   }
   

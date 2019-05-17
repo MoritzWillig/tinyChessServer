@@ -9,7 +9,6 @@
   },
   
   "httpServer": {
-    "enabled": true,
     "port": 80,
     
     "serve_webclient": true,
@@ -26,8 +25,8 @@
   "observers": {
     "websocket": {
       "enabled": true,
-      "boardA": "/websocketObserverA",
-      "boardB": "/websocketObserverB"
+      "pathBoardA": "/websocketObserverA",
+      "pathBoardB": "/websocketObserverB"
     }
   }
 }

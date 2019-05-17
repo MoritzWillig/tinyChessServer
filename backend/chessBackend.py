@@ -39,6 +39,14 @@ while True:
     print(board.bfen, flush=True)
     continue
   
+  if command=="fen a":
+    print(str(board[0].fen()), flush=True)
+    continue
+  
+  if command=="fen b":
+    print(str(board[1].fen()), flush=True)
+    continue
+  
   # the command is a move: <board> ">" <uci move>
   # e.g.: a>B@f1
   try:
