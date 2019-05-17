@@ -28,12 +28,15 @@ class GameServer {
       "a": "white",
       "b": "white"
     };
-    this.timers = [0,0,0,0];
+    this.timers = {
+      "a": [null, null],
+      "b": [null, null],
+    };
     this.isMoveQueued = {
       "a": true,
       "b": true
     };
-    //there are no qeued moves, but this prevent any moves from beeing made before the game starts
+    //there are no queued moves, but this prevents any moves from being made before the game starts
     
     this.state = "preparing0";
     
@@ -213,7 +216,6 @@ class GameServer {
           this._queueGameMessage("new", undefined, (answer) => {
             console.log(">>new answer: ", answer);
             
-            this.timers[0] = this.timers[1] = this.timers[2] = this.timers[3] = this.config["time"];
             this.turns = {
               "a": "white",
               "b": "white"
@@ -250,9 +252,33 @@ class GameServer {
               } else {
                 client.sendMessage("playother");
               }
-              
-              //TODO start timer
             }
+            
+            //start timers
+            //The "paused" flag is only set during the time, the server checks for a received move
+            //to be valid.
+            this.timers = {
+              "a": [{
+                "remaining": this.config["time"],
+                "lastStart": (+new Date()),
+                "paused": false
+              }, {
+                "remaining": this.config["time"],
+                "lastStart": null,
+                "paused": false
+              }],
+              "b": [{
+                "remaining": this.config["time"],
+                "lastStart": (+new Date()),
+                "paused": false
+              }, {
+                "remaining": this.config["time"],
+                "lastStart": null,
+                "paused": false
+              }],
+              "timer": setInterval(() => { this._checkClocks(); }, 100) //update every tenth of a second
+            };
+            
           });
         }
         break;
@@ -260,14 +286,18 @@ class GameServer {
         switch (message) {
           case "game_ended":
             //TODO remove any queued moves
-            //prevent any further moves from beeing queued
+            //prevent any further moves from getting queued
             this.isMoveQueued = {
               "a": true,
               "b": true,
             };
-            //TODO broadcast results
+            //clear timer
+            clearInterval(this.timers["timer"]);
+            
+            //broadcast results
             let result = data.result;
             this.broadcast(result+" {one of the players was mated D:}");
+            //data.playerMated otherwise by time
             
             this.state="ready";
             this.broadcast("#the game is ready to start. Type 'go' to start a new game");
@@ -290,6 +320,41 @@ class GameServer {
     }
   }
   
+  /**
+   * returns true if the game is still ongoing; false if a player run out of time.
+  **/
+  _checkClocks(board, currentTime) {
+    if (currentTime === undefined) {
+      currentTime = (+new Date());
+    }
+    
+    let boards = [board];
+    if (board == undefined) {
+      boards = ["a", "b"];
+    }
+    
+    for (let board of boards) {
+      let onTheMove = (this.turns["board"] == "white")?0:1;
+      
+      let clock = this.timers[board][onTheMove];
+      
+      //check if the timer is currently being paused.
+      if (clock["paused"] === true) {
+        continue;
+      }
+      
+      let timePassed = currentTime - clock["lastStart"];
+      
+      if (clock["remaining"] - timePassed <= 0) {
+        //time run out
+        this._processStateMessage("game_ended", { result: `${onTheMove}-${1-onTheMove}`, playerMated: false });
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
   _getPartner(clientIdx) {
     //pair players 0&1 and 2&3
     switch (clientIdx) {
@@ -309,13 +374,19 @@ class GameServer {
     return (clientIdx%2 == 0)?"white":"black";
   }
   
+  _getColorIndex(clientIdx) {
+    return (clientIdx%2 == 0)?0:1;
+  }
+  
   _getBoard(clientIdx) {
     return (clientIdx<2)?"a":"b";
   }
   
   _processClientGameMessage(client, message) {
-    //sanitize message string: only word chars (a-z) and space is allowed
-    message = message.replace(/[^\w ]/gi, "");
+    let currentTime = (+new Date());
+    
+    //sanitize message string: a-z, 0-9 and some special chars are allowed
+    message = message.replace(/[^\w \+\-\#\@\!\?\=\*\~\'\"\$\%\&\|\[\]\(\)\{\}\<\>\.\,\:\;\_\/\\\`\´]/gi, "");
     
     console.log("processing client game message:", message);
     
@@ -333,16 +404,25 @@ class GameServer {
       return;
     }
     
-    this.isMoveQueued[board] = true;
     
-    //TODO stop timers and timer states
+    //check if the move arrived within time
+    if (!this._checkClocks(board, currentTime)) {
+      return;
+    }
+    //stop this timer while we check for validity
+    let clock = this.timers[board][this._getColorIndex(playerIdx)];
+    clock.paused = true;
     
     //try to make the move
+    this.isMoveQueued[board] = true;
     this._queueGameMessage("move", board+">"+message, answer => {
       this.isMoveQueued[board] = false;
       
+      //For a valid move, update the timers.
+      //Illegal moves are ignored. Pretend, that the timers were never stopped.
+      clock.paused = false;
+      
       if (answer == "rejected") {
-        //start timers and apply
         client.sendMessage("Error (not a move): "+message);
         return;
       }
@@ -363,9 +443,14 @@ class GameServer {
       let game_ended = (answer != "ok");
       if (game_ended) {
         let result = answer.slice(3);
-        this._processStateMessage("game_ended", { result: result });
+        this._processStateMessage("game_ended", { result: result, playerMated: true });
       } else {
-        //TODO start the other timer
+        //update the current and start the other clock
+        clock["remaining"] -= currentTime - clock["lastStart"];
+        clock["lastStart"] = null;
+        
+        let otherClock = this.timers[board][this._getColorIndex(playerIdx)==0?1:0];
+        otherClock["lastStart"] = (+new Date());
       }
     });
   }
