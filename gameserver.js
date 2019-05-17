@@ -140,19 +140,18 @@ class GameServer {
       board.splice(board.indexOf(client), 1);
     });
     
-    //observer messages are ignored (~only needed for the handshake)
-    client.on("client.game.message", (client, message) => {
-      this._processObserverMessage("client_game_message", {client: message, message: message});
+    //observer messages are ignored (only needed for the handshake)
+    client.on("client.game.message", data => {
+      this._processObserverMessage("client_observer_message", { board: boardName, client: data.client, message: data.message});
     });
     
-    client.on("client.game.needs_state", (client) => {
-      client.sendMessage('setboard '+game.getFen());
-    });
+    //client.on("client.game.needs_state", (client) => {
+    //  this.game.getFen(boardName, answer => { client.send(client.sendMessage('setboard '+ answer); }));
+    //});
     
     client.setState("negotiating");
     client.sendMessage("xboard");
     client.sendMessage("protover 4");
-    
     return true;
   }
   
@@ -240,13 +239,13 @@ class GameServer {
             for (let i in this.clients) {
               let client = this.clients[i];
               
-              let partner = this._getPartner(0|i);
+              let partner = this._getPartner(parseInt(i));
               
               client.sendMessage("new");
               client.sendMessage("variant bughouse");
               client.sendMessage("partner "+partner);
-              client.sendMessage("time "+this.timers[i]);
-              client.sendMessage("otim "+this.timers[partner]);
+              client.sendMessage("time "+(this.config["time"] * 100)); //in hundreds of a second
+              client.sendMessage("otim "+(this.config["time"] * 100));
               if (this._getColor(i) == "white") {
                 client.sendMessage("go");
               } else {
@@ -295,15 +294,68 @@ class GameServer {
             clearInterval(this.timers["timer"]);
             
             //broadcast results
+            let board = data.board;
             let result = data.result;
-            let byMate = data.playerMated;
-            this.broadcast(result+" "+(byMate?"{one of the players was mated D:}":"{time run out}"));
+            let onTime = data.onTime;
+            let comment = "";
+            
+            if (result == "*") {
+              //no more moves to play on both boards. check timers.
+              let onTheMoveA = (this.turns["a"]=="white")?0:1;
+              let onTheMoveB = (this.turns["b"]=="white")?0:1;
+              
+              if (onTheMoveA != onTheMoveB) {
+                //the same team has to make a move on both boards
+                board = "a";
+                result = `${onTheMoveA}-${1-onTheMoveA}`;
+                onTime = true;
+                comment = "team can play no more moves. Time will run out.";
+              } else {
+                //check which player of both teams will run out of time earlier.
+                let remainingA = this.timers["a"][onTheMoveA]["remaining"];
+                let remainingB = this.timers["b"][onTheMoveB]["remaining"];
+                
+                if (remainingA == remainingB) {
+                  board = "a";
+                  result = "1/2-1/2";
+                  onTime = true;
+                  comment = "no more moves to play. Both teams have the _exact_ same amount of time remaining!";
+                } else {
+                  if (remainingA < remainingB) {
+                    board = "a";
+                    result = `${onTheMoveA}-${1-onTheMoveA}`;
+                    onTime = true;
+                    comment = `No more moves to play. ${(onTheMoveA==0)?"White":"Black"} will run out of time.`;
+                  } else {
+                    board = "b";
+                    result = `${onTheMoveB}-${1-onTheMoveB}`;
+                    onTime = true;
+                    comment = `No more moves to play. ${(onTheMoveB==0)?"White":"Black"} will run out of time.`;
+                  }
+                }
+              }
+            } else {
+              //regular mate
+              comment = `${this.turns[board]} mated.`;
+            }
+            
+            //broadcast the result for the deciding board
+            this.broadcast(result+" {"+comment+"}", board);
+            
+            //broadcast result to the other board. Since the players of the teams, play different colors
+            //the result has to be inversed.
+            let otherBoard = (board=="a")?"b":"a";
+            let otherResult = result.split("-").reverse().join("-");
+            this.broadcast(otherResult+" {the other board finished}", otherBoard);
             
             this.state="ready";
             console.log("#the game is ready to start. Type 'go' to start a new game");
             break;
           case "client_game_message":
             this._processClientGameMessage(data.client, data.message);
+            break;
+          case "client_observer_message":
+            //observer messages are currently ignored
             break;
         }
         break;
@@ -346,7 +398,7 @@ class GameServer {
       let timePassed = currentTime - clock["lastStart"];
       if (clock["remaining"] - timePassed <= 0) {
         //time run out
-        this._processStateMessage("game_ended", { result: `${onTheMove}-${1-onTheMove}`, playerMated: false });
+        this._processStateMessage("game_ended", { board: board, result: `${onTheMove}-${1-onTheMove}`, onTime: true });
         return false;
       }
     }
@@ -442,7 +494,7 @@ class GameServer {
       let game_ended = (answer != "ok");
       if (game_ended) {
         let result = answer.slice(3);
-        this._processStateMessage("game_ended", { result: result, playerMated: true });
+        this._processStateMessage("game_ended", { board:board, result: result, onTime: false });
       } else {
         //update the current and start the other clock
         clock["remaining"] -= currentTime - clock["lastStart"];

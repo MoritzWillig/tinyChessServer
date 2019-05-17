@@ -29,15 +29,6 @@ class WebSocketGameServer {
       this.clients.push(wsgc);
       this.doEvent("client.new", wsgc);
     });
-    
-    /*
-    wss.clients
-                .forEach(client => {
-                    if (client != ws) {
-                        client.send(`Hello, broadcast message -> ${message}`);
-                    }    
-    });
-    */
   }
   
   on(eventName, eventHandler) {

@@ -28,6 +28,8 @@ const gameserver = new GameServer(() => {
 let httpServer = null;
 let webserver = null;
 let websocketserver = null;
+let websocketObserverServerA = null;
+let websocketObserverServerB = null;
 
 if (config["httpServer"]["serve_webclient"] === true) {
   webserver = new WebServer(config["httpServer"]);
@@ -45,6 +47,33 @@ if (config["clients"]["websocket"]["enabled"] === true) {
     }
   });
 }
+
+/*
+//observers
+if (config["observers"]["websocket"]["enabled"] === true) {
+  let configA = Object.assign({}, config["observers"]["websocket"]);
+  configA["path"] = configA["boardA"];
+  
+  websocketObserverServerA = new WebSocketGameServer(httpServer, configA);
+  websocketObserverServerA.on("client.new", (client) => {
+    if (!gameserver.addObserver("a",client)) {
+      client.close();
+    }
+  });
+}
+
+if (config["observers"]["websocket"]["enabled"] === true) {
+  let configB = Object.assign({}, config["observers"]["websocket"]);
+  configB["path"] = configB["boardB"];
+  
+  websocketObserverServerB = new WebSocketGameServer(httpServer, configB);
+  websocketObserverServerB.on("client.new", (client) => {
+    if (!gameserver.addObserver("b",client)) {
+      client.close();
+    }
+  });
+}*/
+
 
 httpServer.listen(config["httpServer"]["port"]);
 
