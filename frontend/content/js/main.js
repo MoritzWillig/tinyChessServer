@@ -125,6 +125,10 @@ function connect() {
   
   ws = new WebSocket("ws://127.0.0.1:80/websocketclient");
   
+  ws.onerror = (event, a, b) => {
+    console.log("websocket error:",event, a, b);
+  }
+  
   ws.onmessage = (event) => {
     let message = event.data;
     

@@ -173,10 +173,13 @@ class GameServer {
       this._processStateMessage("client_game_message", {client: data.client, message: data.message});
     });
     
+    client.on("connection.close", x => {
+      console.log("lost connection to a player client");
+    });
+    
     client.setState("negotiating");
     client.sendMessage("xboard");
     client.sendMessage("protover 4");
-    
     return true;
   }
   
@@ -309,7 +312,7 @@ class GameServer {
                 board = "a";
                 result = `${onTheMoveA}-${1-onTheMoveA}`;
                 onTime = true;
-                comment = "team can play no more moves. Time will run out.";
+                comment = "The team can play no more moves. Time will run out.";
               } else {
                 //check which player of both teams will run out of time earlier.
                 let remainingA = this.timers["a"][onTheMoveA]["remaining"];
@@ -319,7 +322,7 @@ class GameServer {
                   board = "a";
                   result = "1/2-1/2";
                   onTime = true;
-                  comment = "no more moves to play. Both teams have the _exact_ same amount of time remaining!";
+                  comment = "No more moves to play. Both teams have the _exact_ same amount of time remaining!";
                 } else {
                   if (remainingA < remainingB) {
                     board = "a";
@@ -346,7 +349,7 @@ class GameServer {
             //the result has to be inversed.
             let otherBoard = (board=="a")?"b":"a";
             let otherResult = result.split("-").reverse().join("-");
-            this.broadcast(otherResult+" {the other board finished}", otherBoard);
+            this.broadcast(otherResult+" {The other board finished}", otherBoard);
             
             this.state="ready";
             console.log("#the game is ready to start. Type 'go' to start a new game");

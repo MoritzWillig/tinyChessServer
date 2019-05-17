@@ -74,19 +74,18 @@ class WebSocketGameClient extends GameClient {
           if (command === "feature") {
             //TODO we should check the requested features ...
             this.sendMessage("accepted");
-            this.sendMessage("#waiting for other players");
             this.setState("ready");
             this.doEvent("client.ready");
           }
           break;
         case "ready":
-          this.doEvent("client.game.message", { client:this, message:message});
+          this.doEvent("client.game.message", { client:this, message:message });
           break;
       }
     });
     
     ws.on('close', (code, reason) => {
-      this.doEvent("connection.close", {code: code, reason: reason});
+      this.doEvent("connection.close", { code: code, reason: reason });
     });
   }
   
