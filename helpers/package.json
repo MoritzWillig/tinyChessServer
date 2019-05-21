@@ -1,0 +1,15 @@
+{
+  "name": "tinyChessServerHelper",
+  "version": "1.0.0",
+  "description": "command line application to websocket",
+  "main": "cliToWebsocket.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Moritz Willig",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^7.0.0"
+  }
+}
