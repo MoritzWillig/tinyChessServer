@@ -423,11 +423,30 @@ class GameServer {
   }
   
   _getColor(clientIdx) {
-    return (clientIdx%2 == 0)?"white":"black";
+    //0 (white) plays against 2 (black), and 1 (black) against 3 (white).
+    switch (clientIdx) {
+      case 0:
+        return "white";
+      case 1:
+        return "black";
+      case 2:
+        return "black";
+      case 3:
+        return "white";
+    }
   }
   
   _getColorIndex(clientIdx) {
-    return (clientIdx%2 == 0)?0:1;
+    switch (clientIdx) {
+      case 0:
+        return 0;
+      case 1:
+        return 1;
+      case 2:
+        return 1;
+      case 3:
+        return 0;
+    }
   }
   
   _getBoard(clientIdx) {
