@@ -450,7 +450,16 @@ class GameServer {
   }
   
   _getBoard(clientIdx) {
-    return (parseInt(clientIdx)<2)?"a":"b";
+    switch (parseInt(clientIdx)) {
+      case 0:
+        return "a";
+      case 1:
+        return "b";
+      case 2:
+        return "a";
+      case 3:
+        return "b";
+    }
   }
   
   _processClientGameMessage(client, message) {

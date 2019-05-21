@@ -67,14 +67,14 @@ class ChessCLIGame extends Game {
     if (moveStr.indexOf("\n") != -1) {
       process.nextTick(() => {
         this.doEvent("game.answer", "rejected");
-      }
+      });
     }
     
     //filter command strings
     if ((moveStr == "new") || (moveStr == "close") || (moveStr == "fen") || (moveStr == "fen a") || (moveStr == "fen b")) {
       process.nextTick(() => {
         this.doEvent("game.answer", "rejected");
-      }
+      });
     }
     this._sendMessage(moveStr+"\n");
   }
