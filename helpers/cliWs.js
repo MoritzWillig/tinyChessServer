@@ -43,7 +43,7 @@ const child_rl = readline.createInterface({
   output: this.child.stdin
 });
 child.stderr.on('data', (data) => {
-  console.log("[binary|error]",data");
+  console.log("[binary|error]", data);
 });
 child_rl.on('line', (line) => {
   console.log("[binary|message]", line);
@@ -76,7 +76,7 @@ let rl = readline.createInterface({
 });
 
 rl.on('line', (line) => {
-  if (line.trim() == "close") || (line.trim() == "exit")) {
+  if ((line.trim() == "close") || (line.trim() == "exit")) {
     //close application
     doClose();
   }
