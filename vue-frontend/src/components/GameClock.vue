@@ -1,13 +1,13 @@
 <template>
   <div class="wrapper" :style="{'text-align': align}">
     <div class="name" v-if="align == 'right'">
-      {{name}}
+      {{name}} <span v-if="onMove">(is on move)</span>
     </div>
     <div class="clock-border">
       {{timeAsString}}
     </div>
     <div class="name" v-if="align == 'left'">
-      {{name}}
+      {{name}} <span v-if="onMove">(is on move)</span>
     </div>
   </div>
 </template>
@@ -25,6 +25,10 @@ export default {
       type: String,
       default: "No engine name defined"
     },
+    onMove: {
+      type: Boolean,
+      default: false
+    },
     align: {
       type: String,
       default: "left"
@@ -37,7 +41,7 @@ export default {
       var secs = s % 60;
       s = (s - secs) / 60;
       var mins = s % 60;
-      var hrs = (s - mins) / 60;
+      // var hrs = (s - mins) / 60;
 
       var pad = function (n) {
           return (n < 10) ? ("0" + n) : n;

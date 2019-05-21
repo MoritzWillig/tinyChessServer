@@ -32,8 +32,6 @@ export default {
   },
   methods: {
     joinServer() {
-      console.log(this.websocketConnection)
-      console.log()
       this.websocketConnection.send('game_ended')
     }
   }

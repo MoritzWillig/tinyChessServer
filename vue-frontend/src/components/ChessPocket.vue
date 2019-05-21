@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper" :class="[enabled ? 'enabled' : '']">
     <div class="slot" :style="{ color: color }" v-for="piece in pieces" :key="piece.type">
-      <div class="piece" @click="enabled ? $emit('selection', piece) : ''" :class="[piece.type, color, piece.selected]"></div>
+      <div class="piece" @click="enabled ? $emit('selection', piece) : ''" :class="[piece.type, color, piece.type === selectedPiece ? 'selected' : '' ]"></div>
       <div class="piece-count">{{piece.count}}</div>
     </div>
     <div class="slot" v-for="indx in emptySlots" :key="indx">
@@ -30,6 +30,10 @@ export default {
     enabled: {
       type: Boolean,
       default: false
+    },
+    selectedPiece: {
+      type: String,
+      default: ''
     }
   }
 }
