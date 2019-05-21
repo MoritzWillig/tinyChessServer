@@ -69,23 +69,24 @@ export default {
         // get click field
         var x = Math.floor(event.layerX / 40);
         var y = Math.floor(event.layerY / 40)
-        var stringPos = y * 9 + x
+        // var stringPos = y * 9 + x
 
+        var letters = {0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h'}
         var pieceCode = Vue.methds.pieceTypeToShort(this.selectedPockedPiece['boardA'])
 
-        pieceCode = this.turnColor === 'white' ? pieceCode.toUpperCase() : pieceCode
-
-        this.$store.dispatch('insertPieceAtPosition', ['boardA', pieceCode, stringPos])
+        // pieceCode = this.turnColor === 'white' ? pieceCode.toUpperCase() : pieceCode
+        pieceCode = {'type': pieceCode, 'color': this.turnColor.charAt(0)}
+        this.$store.dispatch('insertPieceAtPosition', ['boardA', pieceCode, letters[x] + (8 - y)])
       }
       else {
         this.deselectPocketPieces();
       }
     },
     setNewFen(event) {
-      this.$store.commit('setNewFen', ['boardA', event.fen])
+      this.$store.dispatch('move', ['boardA', event.history[0]])
     },
     setNewFenB(event) {
-      this.$store.commit('setNewFen', ['boardB', event.fen])
+      this.$store.dispatch('move', ['boardB', event.history[0]])
     }
   }
 }

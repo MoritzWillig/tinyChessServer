@@ -83,11 +83,11 @@ const store = new Vuex.Store({
      },
     pockets: {
       "boardA": {
-        "white": [{'type': 'queen', 'count': 1}, {'type': 'rook', 'count': 1}, {'type': 'pawn', 'count': 4}],
-        "black": [{'type': 'queen', 'count': 1}]
+        "white": [],
+        "black": []
       },
       "boardB": {
-        'white': [{'type': 'queen', 'count': 1}, {'type': 'pawn', 'count': 4}],
+        'white': [],
         'black': []
       }
     },
@@ -107,30 +107,61 @@ const store = new Vuex.Store({
     },
   },
   actions: {
+    processCommand(context, command){
+      var boardName = command[0]
+      var command = command[1]
+      console.log(boardName, command, command.length)
+      // simple move e.g. e2e4
+      // castling (rochade): e1g1, e1c1, e8g8, e8c8
+      if (command == 'new') {
+        $store.commit('newGame')
+      }
+      if (command.length == 4 && command.match(/\w\d\w\d/i)) {
+        store.dispatch('move', [boardName, command])
+      }
+      // pawn promotion e.g. e7e8q
+      if (command.length == 5 && command.match(/\w\d\w\d\w/i)) {
+        store.dispatch('move', [boardName, command])
+      }  
+      // Bughouse/crazyhouse drop:	P@h3
+      if (command.length == 4 && command.match(/\w\@\w\d/i)) {
+        console.log('insertation')
+        store.dispatch('insertPieceAtXBoardPosition', [boardName, command])
+      }
+      // ICS Wild 0/1 castling:	d1f1, d1b1, d8f8, d8b8
+      // FischerRandom castling:	O-O, O-O-O (oh, not zero)
+      // Multi-leg move:	c4d5,d5e4 (legs separated by comma)
+      // Null move:	@@@@
+    },
     insertPieceAtXBoardPosition(context, payload){
       var board = payload[0]
       var command = payload[1]
       var piece = command.charAt(0)
-      var position = Vue.methds.getOffsetForFen(command.charAt(2), command.charAt(3))
-      context.dispatch('insertPieceAtPosition', [board, piece, position])
+      var position = command.charAt(2) + command.charAt(3)
+      // var position = Vue.methds.getOffsetForFen(command.charAt(2), command.charAt(3))
+      context.dispatch('insertPieceAtPosition', [board, {'type': piece, 'color': context.getters.currentTurnColor(board).charAt(0)}, position])
     },
     /* inserts piece (e.g. 'p') at fen-offset position, changes turn color */
     insertPieceAtPosition(context, payload){
       var board = payload[0]
       var piece = payload[1]
       var position = payload[2]
-
-      var boardFen = context.getters.getBoardWithExplicitNumbers(board)
-      var fen = Vue.methds.replaceAt(boardFen, position, piece)
+      console.log(piece, position)
+      
+      context.state.games[board].put(piece, position)
+      var fen = context.state.games[board].fen()
       fen = Vue.methds.changeFenTurnColor(fen)
-      context.dispatch('removePieceFromPocket', [board, piece])
-      context.dispatch('setBoardWithExplicitNumbers', [board, fen])
+      context.state.games[board].load(fen)
+
+
+      context.dispatch('removePieceFromPocket', [board, piece.type])
+      context.commit('updateFenFromGame', board)
     },
     removePieceFromPocket(context, payload){
       var board = payload[0]
       var piece = Vue.methds.pieceShortToType(payload[1])
       var turnColor = context.getters.currentTurnColor(board)
-      var pocket = context.state.pockets["boardA"][turnColor]
+      var pocket = context.state.pockets[board][turnColor]
 
       pocket.forEach((element, indx) => {
         if(piece === element.type) {
@@ -145,36 +176,46 @@ const store = new Vuex.Store({
       })
       context.commit('setNewPocket', [board, turnColor, pocket])
     },
+    addPieceToPocket(context, payload){
+      var board = payload[0]
+      var color = payload[1]
+      var piece = Vue.methds.pieceShortToType(payload[2])
+      var pocket = context.state.pockets[board][color]
+
+      var isPlaced = false
+      pocket.forEach((element, indx) => {
+        if(piece === element.type) {
+          pocket[indx]['count'] += 1;
+          isPlaced = true
+        }
+      })
+      if (!isPlaced) {
+        pocket.push({'type': piece, 'count': 1})
+      }
+      context.commit('setNewPocket', [board, color, pocket])
+    },
     move(context, payload){
       var board = payload[0]
       var command = payload[1]
-      var fen = context.getters.getBoardWithExplicitNumbers(board)
-
-      // get FEN offsets
-      var offsetOldPos = Vue.methds.getOffsetForFen(command.charAt(0), command.charAt(1))
-      var offsetNewPos = Vue.methds.getOffsetForFen(command.charAt(2), command.charAt(3))
-
-      // get type of element that was moved
-      if (command.length == 5) {
-        var elToMoveType = command.charAt(4)
-      } else {
-        var elToMoveType = fen.charAt(offsetOldPos)
+      var res = context.state.games[board].move(command, {sloppy: true})
+      console.log(res)
+      if (res && "captured" in res){
+        context.dispatch('addPieceToPocket', [board == 'boardA' ? 'boardB' : 'boardA', res.color == 'w' ? 'black' : 'white', res.captured])
       }
-
-      fen = Vue.methds.replaceAt(fen, offsetOldPos, '1')
-      fen = Vue.methds.replaceAt(fen, offsetNewPos, elToMoveType)
-      fen = Vue.methds.changeFenTurnColor(fen)
-
-      context.dispatch('setBoardWithExplicitNumbers', [board, fen])
-    },
-    setBoardWithExplicitNumbers (context, payload) {
-      var board = payload[0]
-      var fen = Vue.methds.makeFenImplicit(payload[1])
-      console.log('setting new fen', fen)
-      context.commit('setNewFen', [board, fen])
+      context.commit('updateFenFromGame', board)
     }
   },
   mutations: {
+    newGame(state){
+      state.games['boardA'].reset()
+      state.games['boardB'].reset()
+      state.pockets['boardA']['white'] = []
+      state.pockets['boardA']['black'] = []
+      state.pockets['boardB']['white'] = []
+      state.pockets['boardB']['black'] = []
+      state.boards['boardA'] = state.games['boardA'].fen()
+      state.boards['boardB'] = state.games['boardB'].fen()
+    },
     selectPocketPiece(state, payload){
       var board = payload[0]
       var piece = payload[1]
@@ -189,9 +230,9 @@ const store = new Vuex.Store({
     addWebsocketEvent (state, event) {
       state.wsEvents.push(event)
     },
-    setNewFen(state, event){ // accepts messages of type ['boardA', *fen*]
-      state.boards[event[0]] = event[1]
-      state.selectedPockedPiece[event[0]] = ''
+    updateFenFromGame(state, board){
+      state.selectedPockedPiece[board] = ''
+      state.boards[board] = state.games[board].fen()
     }
   }
 })
@@ -214,24 +255,7 @@ var onmessageFunc = (event, boardName) => {
       element.function();
     }
   });
-  // simple move e.g. e2e4
-  // TODO: remove pieces correctly
-  if (command.length == 4 && command.match(/\w\d\w\d/i)) {
-    store.dispatch('move', [boardName, command])
-  }
-  // pawn promotion e.g. e7e8q
-  if (command.length == 4 && command.match(/\w\d\w\d\w/i)) {
-    store.dispatch('move', [boardName, command])
-  }  
-  // Bughouse/crazyhouse drop:	P@h3
-  if (command.length == 4 && command.match(/\w@\w\d\w/i)) {
-    store.dispatch('insertPieceAtXBoardPosition', [boardName, command])
-  }
-  // castling (rochade): e1g1, e1c1, e8g8, e8c8
-  // ICS Wild 0/1 castling:	d1f1, d1b1, d8f8, d8b8
-  // FischerRandom castling:	O-O, O-O-O (oh, not zero)
-  // Multi-leg move:	c4d5,d5e4 (legs separated by comma)
-  // Null move:	@@@@
+  store.dispatch('processCommand', [boardName, command])
 };
 
 store.state.wsA.onmessage = (event) => {onmessageFunc(event, "boardA")};
