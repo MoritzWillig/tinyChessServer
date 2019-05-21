@@ -61,7 +61,7 @@ ws.on('open', () => {
 });
 ws.on('message', (data) => {
   console.log("[ws|message]", data);
-  child_rl.writeln(data);
+  child_rl.write(data+"\n");
 });
 ws.on('close', () => {
   console.log('[ws|closed]');
