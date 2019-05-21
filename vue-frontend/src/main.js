@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 import Vuex from 'vuex'
+import Chess from 'chess.js'
 
 Vue.use(Vuex)
 
@@ -72,6 +73,10 @@ const store = new Vuex.Store({
     wsA: new WebSocket("ws://localhost:80/websocketObserverA"),
     wsB: new WebSocket("ws://localhost:80/websocketObserverB"),
     wsEvents: [],
+    games: {
+      "boardA": new Chess(),
+      "boardB": new Chess() 
+    },
     boards: {
       "boardA": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", //in fen notation
       "boardB": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -102,7 +107,14 @@ const store = new Vuex.Store({
     },
   },
   actions: {
-    /* inserts piece (e.g. 'p' at fen-offset position */
+    insertPieceAtXBoardPosition(context, payload){
+      var board = payload[0]
+      var command = payload[1]
+      var piece = command.charAt(0)
+      var position = Vue.methds.getOffsetForFen(command.charAt(2), command.charAt(3))
+      context.dispatch('insertPieceAtPosition', [board, piece, position])
+    },
+    /* inserts piece (e.g. 'p') at fen-offset position, changes turn color */
     insertPieceAtPosition(context, payload){
       var board = payload[0]
       var piece = payload[1]
@@ -143,7 +155,11 @@ const store = new Vuex.Store({
       var offsetNewPos = Vue.methds.getOffsetForFen(command.charAt(2), command.charAt(3))
 
       // get type of element that was moved
-      var elToMoveType = fen.charAt(offsetOldPos)
+      if (command.length == 5) {
+        var elToMoveType = command.charAt(4)
+      } else {
+        var elToMoveType = fen.charAt(offsetOldPos)
+      }
 
       fen = Vue.methds.replaceAt(fen, offsetOldPos, '1')
       fen = Vue.methds.replaceAt(fen, offsetNewPos, elToMoveType)
@@ -198,9 +214,24 @@ var onmessageFunc = (event, boardName) => {
       element.function();
     }
   });
+  // simple move e.g. e2e4
+  // TODO: remove pieces correctly
   if (command.length == 4 && command.match(/\w\d\w\d/i)) {
     store.dispatch('move', [boardName, command])
   }
+  // pawn promotion e.g. e7e8q
+  if (command.length == 4 && command.match(/\w\d\w\d\w/i)) {
+    store.dispatch('move', [boardName, command])
+  }  
+  // Bughouse/crazyhouse drop:	P@h3
+  if (command.length == 4 && command.match(/\w@\w\d\w/i)) {
+    store.dispatch('insertPieceAtXBoardPosition', [boardName, command])
+  }
+  // castling (rochade): e1g1, e1c1, e8g8, e8c8
+  // ICS Wild 0/1 castling:	d1f1, d1b1, d8f8, d8b8
+  // FischerRandom castling:	O-O, O-O-O (oh, not zero)
+  // Multi-leg move:	c4d5,d5e4 (legs separated by comma)
+  // Null move:	@@@@
 };
 
 store.state.wsA.onmessage = (event) => {onmessageFunc(event, "boardA")};
