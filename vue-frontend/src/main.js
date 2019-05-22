@@ -64,6 +64,12 @@ Vue.methds = {
       }
     });
     return retEl
+  },
+  removeEnPassantFromFen: (str) => {
+    str = str.split(" ")
+    str[3] = "-"
+    str = str.join(" ")
+    return str
   }
 }
 
@@ -151,8 +157,8 @@ const store = new Vuex.Store({
       context.state.games[board].put(piece, position)
       var fen = context.state.games[board].fen()
       fen = Vue.methds.changeFenTurnColor(fen)
+      fen = Vue.methds.removeEnPassantFromFen(fen)
       context.state.games[board].load(fen)
-
 
       context.dispatch('removePieceFromPocket', [board, piece.type])
       context.commit('updateFenFromGame', board)
