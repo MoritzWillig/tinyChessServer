@@ -11,11 +11,11 @@
       <div class="options" v-if="currentOption == 'walkThrough'">
         <div style="margin: 3em">
           <div style="display: inline-block">
-            <textarea style="height: 10em; width: 20em"  v-model="messagesA" placeholder="add multiple commands"></textarea>
+            <textarea style="display: block; height: 10em; width: 20em"  v-model="messagesA" placeholder="add multiple commands"></textarea>
             <a class="button" @click="sendCommandA">Send command (A)</a>
           </div>
           <div  style="display: inline-block">
-            <textarea  style="height: 10em; width: 20em" v-model="messagesB" placeholder="add multiple commands"></textarea>
+            <textarea  style="display: block; height: 10em; width: 20em" v-model="messagesB" placeholder="add multiple commands"></textarea>
             <a class="button" @click="sendCommandB">Send command (B)</a>
           </div>
         </div>

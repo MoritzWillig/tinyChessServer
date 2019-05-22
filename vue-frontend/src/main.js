@@ -107,14 +107,14 @@ const store = new Vuex.Store({
     },
   },
   actions: {
-    processCommand(context, command){
-      var boardName = command[0]
-      var command = command[1]
+    processCommand(context, payload){
+      var boardName = payload[0]
+      var command = payload[1]
       console.log(boardName, command, command.length)
       // simple move e.g. e2e4
       // castling (rochade): e1g1, e1c1, e8g8, e8c8
       if (command == 'new') {
-        $store.commit('newGame')
+        store.commit('newGame')
       }
       if (command.length == 4 && command.match(/\w\d\w\d/i)) {
         store.dispatch('move', [boardName, command])
@@ -124,7 +124,7 @@ const store = new Vuex.Store({
         store.dispatch('move', [boardName, command])
       }  
       // Bughouse/crazyhouse drop:	P@h3
-      if (command.length == 4 && command.match(/\w\@\w\d/i)) {
+      if (command.length == 4 && command.match(/\w@\w\d/i)) {
         console.log('insertation')
         store.dispatch('insertPieceAtXBoardPosition', [boardName, command])
       }
