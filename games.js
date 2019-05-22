@@ -3,6 +3,7 @@
 /// This class checks the validity of the moves played and delivers the (private) messages
 /// to the players.
 
+const process = require("process");
 let child_process = require('child_process');
 const readline = require('readline');
 
@@ -64,12 +65,16 @@ class ChessCLIGame extends Game {
   makeMove(moveStr) {
     //only single lines are accepted
     if (moveStr.indexOf("\n") != -1) {
-      //TODO answer rejected
+      process.nextTick(() => {
+        this.doEvent("game.answer", "rejected");
+      });
     }
     
     //filter command strings
     if ((moveStr == "new") || (moveStr == "close") || (moveStr == "fen") || (moveStr == "fen a") || (moveStr == "fen b")) {
-      //TODO answer "rejected"
+      process.nextTick(() => {
+        this.doEvent("game.answer", "rejected");
+      });
     }
     this._sendMessage(moveStr+"\n");
   }

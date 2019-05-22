@@ -409,7 +409,7 @@ class GameServer {
   
   _getPartner(clientIdx) {
     //pair players 0&1 and 2&3
-    switch (clientIdx) {
+    switch (parseInt(clientIdx)) {
       case 0:
         return 1;
       case 1:
@@ -423,15 +423,43 @@ class GameServer {
   }
   
   _getColor(clientIdx) {
-    return (clientIdx%2 == 0)?"white":"black";
+    //0 (white) plays against 2 (black), and 1 (black) against 3 (white).
+    switch (parseInt(clientIdx)) {
+      case 0:
+        return "white";
+      case 1:
+        return "black";
+      case 2:
+        return "black";
+      case 3:
+        return "white";
+    }
   }
   
   _getColorIndex(clientIdx) {
-    return (clientIdx%2 == 0)?0:1;
+    switch (parseInt(clientIdx)) {
+      case 0:
+        return 0;
+      case 1:
+        return 1;
+      case 2:
+        return 1;
+      case 3:
+        return 0;
+    }
   }
   
   _getBoard(clientIdx) {
-    return (clientIdx<2)?"a":"b";
+    switch (parseInt(clientIdx)) {
+      case 0:
+        return "a";
+      case 1:
+        return "b";
+      case 2:
+        return "a";
+      case 3:
+        return "b";
+    }
   }
   
   _processClientGameMessage(client, message) {
