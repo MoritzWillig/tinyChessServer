@@ -100,7 +100,8 @@ const store = new Vuex.Store({
     selectedPockedPiece: {
       "boardA": "pawn",
       "boardB": ""
-    }
+    },
+    status: "preparing0"
   },
   getters: {
     getBoardWithExplicitNumbers: (state) => (board) => {
@@ -116,11 +117,20 @@ const store = new Vuex.Store({
     processCommand(context, payload){
       var boardName = payload[0]
       var command = payload[1]
-      console.log(boardName, command, command.length)
+      console.log(boardName, command)
       // simple move e.g. e2e4
       // castling (rochade): e1g1, e1c1, e8g8, e8c8
       if (command == 'new') {
         store.commit('newGame')
+      }
+      if (command.charAt(0) == "#"){
+        var command_split = command.split(" ")
+        console.log(command_split)
+        console.log(command_split[1])
+        console.log(command_split[2])
+        if (command_split[1] == "status"){
+          store.commit('setStatus', [boardName, command_split[2]])
+        }
       }
       if (command.length == 4 && command.match(/\w\d\w\d/i)) {
         store.dispatch('move', [boardName, command])
@@ -227,6 +237,9 @@ const store = new Vuex.Store({
       var piece = payload[1]
       state.selectedPockedPiece[board] = piece
     },
+    setStatus(state, status){
+      state.status = status[1]
+    },
     setNewPocket(state, payload){
       var board = payload[0]
       var color = payload[1]
@@ -251,8 +264,9 @@ store.commit('addWebsocketEvent', {'command': 'protover', 'function': () => {
 var onmessageFunc = (event, boardName) => {
   let message = event.data;
   
-  let idx = message.indexOf(" ");
-  let command = (idx!=-1)?message.slice(0, idx):message;
+  let command = message
+  // let idx = message.indexOf(" ");
+  // let command = (idx!=-1)?message.slice(0, idx):message;
   
   console.log("[server, "+boardName+"] "+message);
 

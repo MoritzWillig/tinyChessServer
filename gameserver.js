@@ -38,7 +38,7 @@ class GameServer {
     };
     //there are no queued moves, but this prevents any moves from being made before the game starts
     
-    this.state = "preparing0";
+    this._setState("preparing0");
     
     //game_messages[0] is the message, that is currently processed by
     //the game.
@@ -137,6 +137,10 @@ class GameServer {
     client.on("connection.close", (client) => {
       board.splice(board.indexOf(client), 1);
     });
+
+    client.on("client.status.message", data => {
+      this._processStateMessage(data.message, {});
+    })
     
     //observer messages are ignored (only needed for the handshake)
     client.on("client.game.message", data => {
@@ -173,12 +177,27 @@ class GameServer {
     
     client.on("connection.close", x => {
       console.log("lost connection to a player client");
+      
+      // remove client from clients list
+      var index = this.clients.indexOf(client);
+      if (index > -1) this.clients.splice(index, 1);
+      if (this.clients.length == 0) this._setState("preparing0");
     });
     
     client.setState("negotiating");
     client.sendMessage("xboard");
     client.sendMessage("protover 4");
     return true;
+  }
+
+  _sendToAllObservers(message) {
+    this.observers["a"].forEach(observer => { observer.sendMessage(message) });
+    this.observers["b"].forEach(observer => { observer.sendMessage(message) });
+  }
+
+  _setState(state) {
+    this.state = state;
+    this._sendToAllObservers("# status " + this.state);
   }
   
   _processStateMessage(message, data) {
@@ -189,27 +208,27 @@ class GameServer {
     switch (this.state) {
       case "preparing0":
         if (message === "client_ready") {
-          this.state = "preparing1";
+          this._setState("preparing1");
         }
         break;
       case "preparing1":
         if (message === "client_ready") {
-          this.state = "preparing2";
+          this._setState("preparing2");
         }
         break;
       case "preparing2":
         if (message === "client_ready") {
-          this.state = "preparing3";
+          this._setState("preparing3");
         }
         break;
       case "preparing3":
-        this.state = "ready";
+        this._setState("ready");
         console.log("[server] the game is ready to start. Type 'go' to start");
         break;
       case "ready":
         if (message === "go") {
           this.broadcast("#the game is starting");
-          this.state="in_progress";
+          this._setState("in_progress");
           
           //TODO remove any move commands from the queue
           
@@ -349,7 +368,7 @@ class GameServer {
             let otherResult = result.split("-").reverse().join("-");
             this.broadcast(otherResult+" {The other board finished}", otherBoard);
             
-            this.state="ready";
+            this._setState("ready");
             console.log("#the game is ready to start. Type 'go' to start a new game");
             break;
           case "client_game_message":
@@ -363,7 +382,7 @@ class GameServer {
       case "error":
         break;
       default:
-        this.state="error";
+        this._setState("error");
         broadcast("#internal server error");
         broadcast("quit");
     }

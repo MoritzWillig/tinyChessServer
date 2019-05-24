@@ -1,6 +1,12 @@
 <template>
   <div id="app">
     <h2>Bughouse Chess Server</h2>
+    <div v-if="status === 'preparing0'">Waiting...</div>
+    <div v-if="status === 'preparing1'">1 Client connected</div>
+    <div v-if="status === 'preparing2'">2 Clients connected</div>
+    <div v-if="status === 'preparing3'">3 Clients connected</div>
+    <div v-if="status === 'ready'" style="margin: 1em">ready <a class="button" @click="startGame">Go!</a></div>
+    <div v-if="status === 'in_prograss'">Game in progress!</div>
     <hr>
     <GameBoards/>
     <hr style="margin-bottom: 0em">
@@ -17,6 +23,16 @@ export default {
   components: {
     GameBoards,
     OptionMenu
+  },
+  computed: {
+    status () {
+      return this.$store.state.status
+    }
+  },
+  methods: {
+    startGame() {
+      this.$store.state.wsA.send("go")
+    }
   }
 };
 </script>

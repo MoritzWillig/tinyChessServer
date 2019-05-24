@@ -38,7 +38,7 @@ export default {
     return {
       currentOption: "",
       messagesA: "e2e4 d7d5 e4d5 e7e5 d5e6 f7f5 f1b5 c7c6 g1f3 d8d7 e6d7 e8e7 e1g1 h7h5 d7d8q e7e6 d1e1 e6f7 d8e7 f7g6 e7g5 g6f7 b5c4 c8e6 c4e6 f7e8 b1c3 a7a5 c3b5 f8a3 b2a3 a5a4 b5d6 e8f8 g5d8",
-      messagesB: "e2e4 p@f5",
+      messagesB: "e2e4 p@f5 d2d4",
       nameInput: "human@webinterface"
     }
   },

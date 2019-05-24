@@ -59,6 +59,7 @@ class WebSocketGameClient extends GameClient {
     
     this._events = {
       "client.ready": [],
+      "client.status.message": [],
       "client.game.message": [],
       "connection.close": []
     };
@@ -66,7 +67,11 @@ class WebSocketGameClient extends GameClient {
     ws.on('message', (message) => {
       let parts = message.split(" ");
       let command = parts[0];
-      
+
+      if (command === "go") {
+        this.doEvent("client.status.message", { client:this, message:message });
+      }
+
       switch (this._state) {
         case "negotiating":
           if (command === "feature") {
