@@ -68,7 +68,11 @@ while True:
     print("illegal", flush=True)
   else:
     single_board.push(move)
+    
+    pockets = "["+str(board[0].pockets[chess.WHITE])+"] ["+str(board[0].pockets[chess.BLACK])+"]:" +\
+              "["+str(board[1].pockets[chess.WHITE])+"] ["+str(board[1].pockets[chess.BLACK])+"]"
+    
     if board.is_game_over():
-      print("ok:"+board.result(), flush=True)
+      print("ok"+pockets+"|"+board.result(), flush=True)
     else:
-      print("ok", flush=True)
+      print("ok"+pockets, flush=True)

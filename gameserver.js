@@ -32,6 +32,10 @@ class GameServer {
       "a": [null, null],
       "b": [null, null],
     };
+    this.pockets = {
+      "a": "[] []",
+      "b": "[] []"
+    };
     this.isMoveQueued = {
       "a": true,
       "b": true
@@ -238,6 +242,10 @@ class GameServer {
             this.turns = {
               "a": "white",
               "b": "white"
+            };
+            this.pockets = {
+              "a": "[] []",
+              "b": "[] []"
             };
             //allow moves to get queued
             this.isMoveQueued = {
@@ -539,9 +547,17 @@ class GameServer {
       this.broadcast(message, board, client);
       
       //check if the game has ended
-      let game_ended = (answer != "ok");
+      let vbar = answer.indexOf("|");
+      let pockets = answer.slice(2,(vbar==-1)?undefined:vbar);
+      console.log("p>",pockets);
+      let colon = pockets.indexOf(":");
+      let pocketsA = pockets.slice(0,colon);
+      let pocketsB = pockets.slice(colon+1);
+      this.checkPocketUpdate(pocketsA, pocketsB);
+      
+      let game_ended = (vbar != -1);
       if (game_ended) {
-        let result = answer.slice(3);
+        let result = answer.slice(vbar+1);
         this._processStateMessage("game_ended", { board:board, result: result, onTime: false });
       } else {
         //update the current and start the other clock
@@ -552,6 +568,17 @@ class GameServer {
         otherClock["lastStart"] = (+new Date());
       }
     });
+  }
+  
+  checkPocketUpdate(newPocketsA, newPocketsB) {
+    if (this.pockets["a"] != newPocketsA) {
+      this.pockets["a"] = newPocketsA;
+      this.broadcast("holding "+newPocketsA, "a");
+    }
+    if (this.pockets["b"] != newPocketsB) {
+      this.pockets["b"] = newPocketsB;
+      this.broadcast("holding "+newPocketsB, "b");
+    }
   }
   
   on(eventName, eventHandler) {
