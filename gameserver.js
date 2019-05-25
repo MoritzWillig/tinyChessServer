@@ -1,5 +1,7 @@
 //Processes and passes the messages passing between the game, the console and all connected clients
 
+const GameClient = require("./clients/gameclient.js").GameClient;
+
 class GameServer {
   
   constructor(gameFactory, config) {
@@ -18,7 +20,14 @@ class GameServer {
       this._processGameAnswer(answer);
     });
           
-    this.clients = [];
+    this.clients = [
+      this._createClient(),
+      this._createClient(),
+      this._createClient(),
+      this._createClient()
+    ];
+    this.connectedClients = 0;
+    
     this.observers = {
       "a": [],
       "b": []
@@ -51,6 +60,29 @@ class GameServer {
       callback: fn,
       type: "fen"|"new"|"close"|"move"
     }*/
+  }
+  
+  _createClient() {
+    let client = new GameClient()
+    client.on("client.ready", (client) => {
+      this._processStateMessage("client_ready");
+    });
+    
+    client.on("client.game.message", data => {
+      this._processStateMessage("client_game_message", {client: data.client, message: data.message});
+    });
+    
+    client.on("connection.close", () => {
+      console.log("lost connection to a player client");
+      this.connectedClients--;
+      
+      //if (this.clients.length == 0) {
+      //  TODO stop game (reset game and stop timer)
+      //  this._setState("preparing0");
+      //}
+    });
+    
+    return client;
   }
   
   processMessage(sender, message) {
@@ -161,32 +193,27 @@ class GameServer {
     return true;
   }
   
-  addClient(client) {
-    if (this.clients.length == 4) {
-      console.log("[server] rejected client. There are already four clients connected!");
+  getInactiveClient() {
+    for (let client of this.clients) {
+      if (!client.isActive()) {
+        return client;
+      }
+    }
+    
+    return null;
+  }
+  
+  addCommunicator(gameCommunicator) {
+    if (this.connectedClients == 4) {
+      console.log("[server] rejected client. There are already four connected clients!");
       return false;
     }
     
     console.log("[server] registering a new client");
     
-    this.clients.push(client);
-    
-    client.on("client.ready", (client) => {
-      this._processStateMessage("client_ready");
-    });
-    
-    client.on("client.game.message", data => {
-      this._processStateMessage("client_game_message", {client: data.client, message: data.message});
-    });
-    
-    client.on("connection.close", x => {
-      console.log("lost connection to a player client");
-      
-      // remove client from clients list
-      var index = this.clients.indexOf(client);
-      if (index > -1) this.clients.splice(index, 1);
-      if (this.clients.length == 0) this._setState("preparing0");
-    });
+    this.connectedClients++;
+    let client = this.getInactiveClient();
+    client.setCommunicator(gameCommunicator);
     
     client.setState("negotiating");
     client.sendMessage("xboard");
@@ -237,8 +264,6 @@ class GameServer {
           //TODO remove any move commands from the queue
           
           this._queueGameMessage("new", undefined, (answer) => {
-            console.log(">>new answer: ", answer);
-            
             this.turns = {
               "a": "white",
               "b": "white"
@@ -549,7 +574,6 @@ class GameServer {
       //check if the game has ended
       let vbar = answer.indexOf("|");
       let pockets = answer.slice(2,(vbar==-1)?undefined:vbar);
-      console.log("p>",pockets);
       let colon = pockets.indexOf(":");
       let pocketsA = pockets.slice(0,colon);
       let pocketsB = pockets.slice(colon+1);

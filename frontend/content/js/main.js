@@ -131,11 +131,11 @@ function connect() {
   
   ws.onmessage = (event) => {
     let message = event.data;
+    console.log("[server] "+message);
     
     let idx = message.indexOf(" ");
     let command = (idx!=-1)?message.slice(0, idx):message;
     
-    console.log("[server] "+message);
     switch (command) {
       case "xboard":
         break;

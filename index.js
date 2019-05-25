@@ -41,8 +41,8 @@ httpServer = http.createServer(webserver.getApp());
 
 if (config["clients"]["websocket"]["enabled"] === true) {
   websocketserver = new WebSocketGameServer();
-  websocketserver.on("client.new", (client) => {
-    if (!gameserver.addClient(client)) {
+  websocketserver.on("client.new", (gameCommunicator) => {
+    if (!gameserver.addCommunicator(gameCommunicator)) {
       client.close();
     }
   });
