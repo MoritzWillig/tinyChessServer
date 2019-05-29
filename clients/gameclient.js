@@ -3,9 +3,19 @@ class GameCommunicator {
   
   constructor() {
     this._events = {
+      "client.ready": [],
+      "client.status.message": [],
+      "client.game.message": [],
+      "connection.close": [],
       "receivedMessage": [],
-      "close": []
+      "close": [],
     };
+
+    this._state = "disconnected";
+  }
+  
+  setState(state) {
+    this.state = state;
   }
   
   sendMessage(message) {
