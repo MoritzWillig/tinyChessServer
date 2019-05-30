@@ -526,72 +526,85 @@ class GameServer {
     let board = this._getBoard(playerIdx);
     let playerColor = this._getColor(playerIdx);
     
-    if (this.turns[board] != playerColor) {
-      client.sendMessage("Error (not on the move): "+message);
-      return;
-    }
+    let command = message.split(" ", 1)[0];
+    let parameters = message.slice(command.length+1);
     
-    if (this.isMoveQueued[board] == true) {
-      client.sendMessage("Error (another move is queued): "+message);
-      return;
-    }
-    
-    
-    //check if the move arrived within time
-    if (!this._checkClocks(board, currentTime)) {
-      return;
-    }
-    //stop this timer while we check for validity
-    let clock = this.timers[board][this._getColorIndex(playerIdx)];
-    clock.paused = true;
-    
-    //try to make the move
-    this.isMoveQueued[board] = true;
-    this._queueGameMessage("move", board+">"+message, answer => {
-      this.isMoveQueued[board] = false;
-      
-      //For a valid move, update the timers.
-      //Illegal moves are ignored. Pretend, that the timers were never stopped.
-      clock.paused = false;
-      
-      if (answer == "rejected") {
-        client.sendMessage("Error (not a move): "+message);
-        return;
-      }
-      if (answer == "illegal") {
-        client.sendMessage("Illegal move: "+message);
-        return;
-      }
-      
-      //otherwise the move was valid and was applied at the game backend.
-      
-      //other player is on the move
-      this.turns[board] = (this.turns[board] == "white")?"black":"white";
-      
-      //broadcast move to other clients
-      this.broadcast(message, board, client);
-      
-      //check if the game has ended
-      let vbar = answer.indexOf("|");
-      let pockets = answer.slice(2,(vbar==-1)?undefined:vbar);
-      let colon = pockets.indexOf(":");
-      let pocketsA = pockets.slice(0,colon);
-      let pocketsB = pockets.slice(colon+1);
-      this.checkPocketUpdate(pocketsA, pocketsB);
-      
-      let game_ended = (vbar != -1);
-      if (game_ended) {
-        let result = answer.slice(vbar+1);
-        this._processStateMessage("game_ended", { board:board, result: result, onTime: false });
-      } else {
-        //update the current and start the other clock
-        clock["remaining"] -= currentTime - clock["lastStart"];
-        clock["lastStart"] = null;
+    switch (command) {
+      case "ptell":
+        let otherPlayer = this.clients[this._getPartner(playerIdx)];
+        otherPlayer.sendMessage(message);
+        break;
+      case "move":
+        if (this.turns[board] != playerColor) {
+          client.sendMessage("Error (not on the move): "+message);
+          return;
+        }
         
-        let otherClock = this.timers[board][this._getColorIndex(playerIdx)==0?1:0];
-        otherClock["lastStart"] = (+new Date());
-      }
-    });
+        if (this.isMoveQueued[board] == true) {
+          client.sendMessage("Error (another move is queued): "+message);
+          return;
+        }
+        
+        
+        //check if the move arrived within time
+        if (!this._checkClocks(board, currentTime)) {
+          return;
+        }
+        //stop this timer while we check for validity
+        let clock = this.timers[board][this._getColorIndex(playerIdx)];
+        clock.paused = true;
+        
+        //try to make the move
+        this.isMoveQueued[board] = true;
+        this._queueGameMessage("move", board+">"+parameters, answer => {
+          this.isMoveQueued[board] = false;
+          
+          //For a valid move, update the timers.
+          //Illegal moves are ignored. Pretend, that the timers were never stopped.
+          clock.paused = false;
+          
+          if (answer == "rejected") {
+            client.sendMessage("Error (not a move): "+message);
+            return;
+          }
+          if (answer == "illegal") {
+            client.sendMessage("Illegal move: "+parameters);
+            return;
+          }
+          
+          //otherwise the move was valid and was applied at the game backend.
+          
+          //other player is on the move
+          this.turns[board] = (this.turns[board] == "white")?"black":"white";
+          
+          //broadcast move to other clients
+          this.broadcast(message, board, client);
+          
+          //check if the game has ended
+          let vbar = answer.indexOf("|");
+          let pockets = answer.slice(2,(vbar==-1)?undefined:vbar);
+          let colon = pockets.indexOf(":");
+          let pocketsA = pockets.slice(0,colon);
+          let pocketsB = pockets.slice(colon+1);
+          this.checkPocketUpdate(pocketsA, pocketsB);
+          
+          let game_ended = (vbar != -1);
+          if (game_ended) {
+            let result = answer.slice(vbar+1);
+            this._processStateMessage("game_ended", { board:board, result: result, onTime: false });
+          } else {
+            //update the current and start the other clock
+            clock["remaining"] -= currentTime - clock["lastStart"];
+            clock["lastStart"] = null;
+            
+            let otherClock = this.timers[board][this._getColorIndex(playerIdx)==0?1:0];
+            otherClock["lastStart"] = (+new Date());
+          }
+        });
+        break;
+      default:
+        client.sendMessage("Error (unkown command): Ignored");
+    }
   }
   
   checkPocketUpdate(newPocketsA, newPocketsB) {

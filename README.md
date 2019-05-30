@@ -1,24 +1,33 @@
 # tinyChessServer
 
-1. Install all dependencies:
-```
-$ npm install
-```
- 
- 2. Clone python-chess repository from https://github.com/TimSchneider42/python-chess into `backend/`
- 
- 3. Start server (the port used in defined in config.js)
+## Installation
+
+1. Install all nodejs dependencies:
+ ```
+ $ npm install
+ ```
+
+2. The project requires the modified python-chess repository from https://github.com/TimSchneider42/python-chess which is capable of handling bughouse games.
+ ```
+ git submodule update
+ git submodule init
+ ```
+
+3. Create a copy the `config.json.default`-file and name it `config.json` and adjust the settings to to your system.
+
+## Running the server
+
+1. Start the server (the port used in defined in config.js)
  ```
  node index.js
  ```
- 
- 4. Open a new wepage with `http://localhost:<port>/`
- 
- 5. You can open developer view and console with `F12`
- 
- 6. Open 3 new tabs and hit `play`
- 
- 7. In the server console enter `go`
- 
- 8. You can send a new move with ` ws.send("e2e4")` for example in the developer console. 
- (If you send the same move twice or an illegal move you will get an error.)
+
+2. Open a new wepage with `http://localhost:<port>/`
+
+3. You can open developer view and console with `F12`
+
+4. Open 3 new tabs and hit `play`
+
+5. In the server console enter `go`
+
+6. You can send a new move with `ws.send("move e2e4")` in the developer console.
