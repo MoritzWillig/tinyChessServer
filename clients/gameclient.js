@@ -3,19 +3,9 @@ class GameCommunicator {
   
   constructor() {
     this._events = {
-      "client.ready": [],
-      "client.status.message": [],
-      "client.game.message": [],
-      "connection.close": [],
       "receivedMessage": [],
-      "close": [],
+      "close": []
     };
-
-    this._state = "disconnected";
-  }
-  
-  setState(state) {
-    this.state = state;
   }
   
   sendMessage(message) {
@@ -74,7 +64,9 @@ class GameClient {
       this.doEvent("connection.close", data);
     });
     
-    this.setState("waiting");
+    this.setState("negotiating");
+    this.sendMessage("xboard");
+    this.sendMessage("protover 4");
   }
   
   processMessage(message) {

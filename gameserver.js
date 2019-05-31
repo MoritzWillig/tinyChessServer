@@ -65,11 +65,11 @@ class GameServer {
   _createClient() {
     let client = new GameClient()
     client.on("client.ready", (client) => {
-      this._processStateMessage("client_ready");
+      this._processStateMessage("client_ready", { client: client });
     });
     
     client.on("client.game.message", data => {
-      this._processStateMessage("client_game_message", {client: data.client, message: data.message});
+      this._processStateMessage("client_game_message", { client: data.client, message: data.message });
     });
     
     client.on("connection.close", () => {
@@ -154,10 +154,13 @@ class GameServer {
     }
   }
   
-  addObserver(boardName, client) {
+  addObserver(boardName, gameCommunicator) {
     console.log("[server] registering a new observer");
     
     let board = this.observers[boardName];
+    
+    let client = new GameClient()
+    client.setCommunicator(gameCommunicator);
     board.push(client);
     
     client.on("client.ready", () => {
@@ -187,9 +190,6 @@ class GameServer {
     //  this.game.getFen(boardName, answer => { client.send(client.sendMessage('setboard '+ answer); }));
     //});
     
-    client.setState("negotiating");
-    client.sendMessage("xboard");
-    client.sendMessage("protover 4");
     return true;
   }
   
@@ -215,9 +215,6 @@ class GameServer {
     let client = this.getInactiveClient();
     client.setCommunicator(gameCommunicator);
     
-    client.setState("negotiating");
-    client.sendMessage("xboard");
-    client.sendMessage("protover 4");
     return true;
   }
 
