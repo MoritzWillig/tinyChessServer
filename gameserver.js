@@ -218,14 +218,9 @@ class GameServer {
     return true;
   }
 
-  _sendToAllObservers(message) {
-    this.observers["a"].forEach(observer => { observer.sendMessage(message) });
-    this.observers["b"].forEach(observer => { observer.sendMessage(message) });
-  }
-
   _setState(state) {
     this.state = state;
-    this._sendToAllObservers("# status " + this.state);
+    this.broadcast("# status " + this.state);
   }
   
   _processStateMessage(message, data) {
@@ -643,30 +638,62 @@ class GameServer {
     let toA = (toBoard != "b");
     let toB = (toBoard != "a");
     
+    //if the message is send to both boards, the "otherBoard" observers will
+    //get the message directly -> no need to resend it via "pmove ..."
+    let isGlobal = (toA && toB);
+    
     console.log("[broadcasting to board(s):"+(toA?"a":"")+(toB?"b":"")+"]", message);
     for (let i in this.clients) {
       let client = this.clients[i];
+      if (client == exceptClient) {
+        continue;
+      }
+      
       let board = this._getBoard(i);
       
-      if ((((board == "a") && toA) || ((board == "b") && toB)) && (client != exceptClient)) {
-        client.sendMessage(message);
+      //check if the client is observering the board, were the message will be delivered to
+      let observingDirectly = (isGlobal || (board == toBoard));
+      if ((!observingDirectly) && (!client.flags["otherBoard"])) {
+        continue;
       }
+      
+      //if a client gets a message by observing it via the otherBoard flag,
+      //all commands are prefixed with a "p": "move" -> "pmove", "holding" -> "pholding" ...
+      //TODO there may be problems when sending comments to only one board: "# comment" -> "p# comment"
+      let messagePrefix = (!observingDirectly)?"p":"";
+      client.sendMessage(messagePrefix + message);
     }
     
-    if (toA) {
-      for (let client of this.observers["a"]) {
-        if (client != exceptClient) {
-          client.sendMessage(message);
-        }
+    let observingDirectlyA = (isGlobal || (toBoard == "a"));
+    for (let client of this.observers["a"]) {
+      if (client == exceptClient) {
+        continue;
       }
+      
+      if ((!observingDirectlyA) && (!client.flags["otherBoard"])) {
+        continue;
+      }
+      
+      let messagePrefix = (!observingDirectlyA)?"p":"";
+        
+        
+      client.sendMessage(messagePrefix + message);
     }
     
-    if (toB) {
-      for (let client of this.observers["b"]) {
-        if (client != exceptClient) {
-          client.sendMessage(message);
-        }
+    let observingDirectlyB = (isGlobal || (toBoard == "b"));
+    for (let client of this.observers["b"]) {
+      if (client == exceptClient) {
+        continue;
       }
+      
+      if ((!observingDirectlyB) && (!client.flags["otherBoard"])) {
+        continue;
+      }
+      
+      let messagePrefix = (!observingDirectlyB)?"p":"";
+        
+        
+      client.sendMessage(messagePrefix + message);
     }
   }
   

@@ -1,4 +1,10 @@
 
+function* reverse(arr) {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    yield arr[i];
+  }
+}
+
 class GameCommunicator {
   
   constructor() {
@@ -40,15 +46,24 @@ class GameCommunicator {
 class GameClient {
   
   constructor() {
-    this._communicator = null;
-    this._state = "disconnected";
-    
     this._events = {
       "client.ready": [],
       "client.status.message": [],
       "client.game.message": [],
       "connection.close": []
     };
+    
+    this._communicator = null;
+    this._state = "disconnected";
+    this._reset();
+  }
+  
+  _reset() {
+    this._features = [];
+    this.flags = {
+      otherBoard: false
+    };
+    this.setState("disconnected");
   }
   
   setCommunicator(communicator) {
@@ -80,16 +95,58 @@ class GameClient {
     switch (this._state) {
       case "negotiating":
         if (command === "feature") {
-          //TODO we should check the requested features ...
-          this.sendMessage("accepted");
-          this.setState("ready");
-          this.doEvent("client.ready");
+          this._parseFeatures(message);
+          
+          this._checkFeatures();
         }
         break;
       case "ready":
         this.doEvent("client.game.message", { client:this, message:message });
         break;
     }
+  }
+  
+  _checkFeatures() {
+    //TODO we should check for done=1 or set a timer ...
+    //let doneValue = this.getLastFeatureValue("done");
+    //if ((doneValue === null)) {
+    //  return;
+    //}
+    
+    this.flags["otherBoard"] = (this.getLastFeatureValue("otherboard") === "1");
+    
+    //accept the features
+    //TODO check if we support the flags
+    this.sendMessage("accepted");
+    this.setState("ready");
+    this.doEvent("client.ready");
+  }
+  
+  _parseFeatures(featureString) {
+    let featureRegex = /(\w+)=(?:(\w+)|(?:(?:"((?:[^\\"]|\\.)*))"))/g;
+    
+    let match;
+    while ((match = featureRegex.exec(featureString)) !== null) {
+      this._features.push({key: match[1], value: ((match[2]===undefined)?"":match[2])+((match[3]===undefined)?"":match[3]) });
+    }
+  }
+  
+  getFirstFeatureValue(featureName) {
+    for (let feature of this._features) {
+      if (feature["key"] === featureName) {
+        return feature["value"];
+      }
+    }
+    return null;
+  }
+  
+  getLastFeatureValue(featureName) {
+    for (let feature of reverse(this._features)) {
+      if (feature["key"] === featureName) {
+        return feature["value"];
+      }
+    }
+    return null;
   }
   
   sendMessage(message) {
@@ -109,7 +166,7 @@ class GameClient {
       return;
     }
     
-    this.setState("disconnected");
+    this._reset();
   }
   
   setState(state) {
