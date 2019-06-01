@@ -123,7 +123,7 @@ class GameClient {
   }
   
   _parseFeatures(featureString) {
-    let featureRegex = /(\w+)=(?:(\w+)|(?:(?:"((?:[^\\"]|\\.)*))"))/g;
+    let featureRegex = /(\w+)=(?:(\w+)|(?:"((?:[^\\"]|\\.)*)"))/g;
     
     let match;
     while ((match = featureRegex.exec(featureString)) !== null) {
