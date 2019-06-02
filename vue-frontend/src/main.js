@@ -132,6 +132,7 @@ const store = new Vuex.Store({
           store.commit('setStatus', [boardName, command_split[2]])
         }
       }
+      command = command.replace("move ", "");
       if (command.length == 4 && command.match(/\w\d\w\d/i)) {
         store.dispatch('move', [boardName, command])
       }
