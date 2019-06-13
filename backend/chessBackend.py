@@ -51,15 +51,14 @@ while True:
   # e.g.: a>B@f1
   try:
     if command[0] in ["a", "b"]:
-      if command[0] == "a":
-        single_board = board[0]
-      else:
-        single_board = board[1]
+      board_id = 0 if command[0] == "a" else 1
+      single_board = board[board_id]
     else:
       print("rejected", flush=True)
       continue
     
     move = chess.Move.from_uci(command[2:])
+    move.board_id=board_id
   except:
     print("rejected", flush=True)
     continue
