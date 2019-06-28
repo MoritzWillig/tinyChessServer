@@ -26,7 +26,7 @@
       "clients": [
         {
           "position": 2,
-          "enabled": true,
+          "enabled": false,
           "command": "/projects/myChessEngine/bin/engine -cli -xboard",
           "cwd": "/projects/myChessEngine/"
         }
