@@ -39,7 +39,7 @@ class ChessCLIGame extends Game {
       cwd: config["backend_cwd"],
       encoding: "utf8"
     }, (error, stdout, stderr) => {
-      //noting to do
+      //nothing to do
     });
     
     this.rl = readline.createInterface({

@@ -9,6 +9,7 @@
   },
   
   "httpServer": {
+    "enabled": true,
     "port": 80,
     
     "serve_webclient": true,
@@ -19,6 +20,17 @@
     "websocket": {
       "enabled": true,
       "path": "/websocketclient"
+    },
+    "cli": {
+      "enabled": true,
+      "clients": [
+        {
+          "position": 2,
+          "enabled": true,
+          "command": "/projects/myChessEngine/bin/engine -cli -xboard",
+          "cwd": "/projects/myChessEngine/"
+        }
+      ]
     }
   },
   

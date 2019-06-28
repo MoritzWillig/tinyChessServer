@@ -73,7 +73,7 @@ class GameServer {
     });
     
     client.on("connection.close", () => {
-      console.log("lost connection to a player client");
+      console.log("[server] lost connection to a client");
       this.connectedClients--;
       
       //if (this.clients.length == 0) {
@@ -203,7 +203,7 @@ class GameServer {
     return null;
   }
   
-  addCommunicator(gameCommunicator) {
+  addCommunicator(gameCommunicator, position) {
     if (this.connectedClients == 4) {
       console.log("[server] rejected client. There are already four connected clients!");
       return false;
@@ -212,7 +212,22 @@ class GameServer {
     console.log("[server] registering a new client");
     
     this.connectedClients++;
-    let client = this.getInactiveClient();
+    
+    let client = null;
+    if (position === undefined) {
+      client = this.getInactiveClient();
+    } else {
+      if ((position<0) || (position>=4)) {
+        console.log(`[server] position "${position}" is not available`);
+        return false;
+      }
+      
+      client = this.clients[position];
+      if (client.isActive()) {
+        console.log(`[server] a client is already registered on position "${position}"`);
+        return false;
+      }
+    }
     client.setCommunicator(gameCommunicator);
     
     return true;
