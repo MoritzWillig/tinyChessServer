@@ -5,7 +5,9 @@
     "variant": "bughouse",
     "time": 300,
     "backend_command": "python3 -u chessBackend.py",
-    "backend_cwd": "./backend/"
+    "backend_cwd": "./backend/",
+    
+    "start_if_enough_players_connected": false
   },
   
   "httpServer": {
@@ -23,7 +25,7 @@
     },
     "cli": {
       "enabled": true,
-      "clients": [
+      "engines": [
         {
           "position": 2,
           "enabled": false,

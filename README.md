@@ -31,3 +31,13 @@
 5. In the server console enter `go`
 
 6. You can send a new move with `ws.send("move e2e4")` in the developer console.
+
+## Configuration
+
+
+### Positions
+All clients get assigned an internal board position index. This index determines their team, the board they play on, as well as the side to play.
+0: Team 0 - Board A White
+1: Team 0 - Board B Black
+2: Team 1 - Board A Black
+3: Team 1 - Board B White
