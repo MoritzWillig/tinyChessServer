@@ -74,7 +74,7 @@ class CLIGameCommunicator extends GameCommunicator {
     });
     
     this.rl.on('line', (line) => {
-      this.doEvent("receivedMessage", line);
+      this.doEvent("receivedMessage", line.trim());
     });
   }
   
