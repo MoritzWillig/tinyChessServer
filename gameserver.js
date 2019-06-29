@@ -1,5 +1,7 @@
 //Processes and passes the messages passing between the game, the console and all connected clients
 
+const process = require("process");
+
 const GameClient = require("./clients/gameclient.js").GameClient;
 
 class GameServer {
@@ -238,7 +240,13 @@ class GameServer {
     this.broadcast("# status " + this.state);
   }
   
-  _processStateMessage(message, data) {
+  _queueStateMessage(message, data) {
+    process.nextTick(() => {
+        this._processStateMessage(message, data, true);
+      });
+  }
+  
+  _processStateMessage(message, data, _internal) {
     let old_state = this.state;
     
     console.log("[server] processing message: ", message);
@@ -261,7 +269,13 @@ class GameServer {
         break;
       case "preparing3":
         this._setState("ready");
-        console.log("[server] the game is ready to start. Type 'go' to start");
+        
+        if (this.config["start_if_enough_players_connected"] === true) {
+          console.log("[server] four players connected. starting the game!");
+          this._queueStateMessage("go");
+        } else {
+          console.log("[server] the game is ready to start. Type 'go' to start");
+        }
         break;
       case "ready":
         if (message === "go") {
