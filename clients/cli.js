@@ -84,11 +84,17 @@ class CLIGameCommunicator extends GameCommunicator {
     if (message.startsWith("move") && this.drop_move_prefix) {
       message = message.substring(5);
     }
-    this.child.stdin.write(message + os.EOL);
+    
+    try {
+      this.child.stdin.write(message + os.EOL);
+    } catch(e) {
+      console.log("[cli client] error writing to stdin.");
+      console.log("[cli client]", e);
+      this.close();
+    }
   }
   
   close() {
-    this.cli.close();
   }
   
 }

@@ -108,7 +108,7 @@ class GameServer {
         this.doEvent("server.close");
         break;
       default:
-        console.log(`[server] unknown message from ${sender}: ${message}`);
+        console.log(`[server] unknown message: ${message}`);
     }
   }
   
