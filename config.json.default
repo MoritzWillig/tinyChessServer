@@ -38,7 +38,8 @@
           "position": 2,
           "enabled": false,
           "command": "/projects/myChessEngine/bin/engine -cli -xboard",
-          "cwd": "/projects/myChessEngine/"
+          "cwd": "/projects/myChessEngine/",
+          "drop_move_prefix": false
         }
       ]
     }

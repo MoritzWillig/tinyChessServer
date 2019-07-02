@@ -655,8 +655,8 @@ class GameServer {
           }
         });
         break;
-      default:
-        client.sendMessage("Error (unkown command): Ignored");
+      //default:
+      //  client.sendMessage("Error (unkown command): Ignored");
     }
   }
   

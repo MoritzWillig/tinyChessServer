@@ -76,10 +76,15 @@ class CLIGameCommunicator extends GameCommunicator {
     this.rl.on('line', (line) => {
       this.doEvent("receivedMessage", line.trim());
     });
+
+    this.drop_move_prefix = cliConfig["drop_move_prefix"];
   }
   
   sendMessage(message) {
-    this.rl.write(message + os.EOL);
+    if (message.startsWith("move") && this.drop_move_prefix) {
+      message = message.substring(5);
+    }
+    this.child.stdin.write(message + os.EOL);
   }
   
   close() {
