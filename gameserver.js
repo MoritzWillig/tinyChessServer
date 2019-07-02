@@ -11,6 +11,9 @@ class GameServer {
       "game.new": [],
       "game.update": [],
       "game.end": [],
+      "state.change": [],
+      "communicator.add": [],
+      "communicator.remove": [],
       "server.close": []
     };
     
@@ -18,6 +21,11 @@ class GameServer {
     this.gameFactory = gameFactory;
     
     this.game = this.gameFactory();
+    /**
+     * This flag is used to determine if a game has ended. Diconnecting during an active game can lead to a defeat for
+     * the team. The bpgn of an finished game can still be read.
+    **/
+    this.hasEnded = false;
     this.game.on("game.answer", (answer) => {
       this._processGameAnswer(answer);
     });
@@ -53,7 +61,7 @@ class GameServer {
     };
     //there are no queued moves, but this prevents any moves from being made before the game starts
     
-    this._setState("preparing0");
+    this._setState("preparing");
     
     //game_messages[0] is the message, that is currently processed by
     //the game.
@@ -74,33 +82,33 @@ class GameServer {
       this._processStateMessage("client_game_message", { client: data.client, message: data.message });
     });
     
-    client.on("connection.close", () => {
+    client.on("connection.close", (data) => {
       console.log("[server] lost connection to a client");
       this.connectedClients--;
       
       //if (this.clients.length == 0) {
       //  TODO stop game (reset game and stop timer)
-      //  this._setState("preparing0");
+      //  this._setState("preparing");
       //}
+      
+      this.doEvent("communicator.remove", { client: client, communicator: data.communicator });
     });
     
     return client;
   }
   
-  processMessage(sender, message) {
-    if (sender === "console") {
-      switch (message) {
-        case "go":
-          this._processStateMessage("go");
-          break;
-        case "exit":
-        case "close":
-          this.broadcast("quit");
-          this.doEvent("server.close");
-          break;
-        default:
-          console.log(`[server] unknown message from ${sender}: ${message}`);
-      }
+  processMessage(message) {
+    switch (message) {
+      case "go":
+        this._processStateMessage("go");
+        break;
+      case "exit":
+      case "close":
+        this.broadcast("quit");
+        this.doEvent("server.close");
+        break;
+      default:
+        console.log(`[server] unknown message from ${sender}: ${message}`);
     }
   }
   
@@ -112,7 +120,8 @@ class GameServer {
     let message = {
       callback: fn,
       type: type,
-      data: data
+      data: data,
+      invalid: false
     };
     this.game_messages.push(message);
     
@@ -121,11 +130,22 @@ class GameServer {
     }
   }
   
+  _clearQueuedMoves() {
+    //flag moves as invalid
+    for (let message of this.game_messages) {
+      if (message.type == "move") {
+        message.invalid = true;
+      }
+    }
+  }
+  
   _processGameAnswer(answer) {
     //remove processed message
     let processedMessage = this.game_messages.splice(0, 1)[0];
     
-    processedMessage.callback(answer);
+    if (processedMessage.invalid === false) {
+      processedMessage.callback(answer);
+    }
     
     //start next query
     if (this.game_messages.length != 0) {
@@ -232,18 +252,14 @@ class GameServer {
     }
     client.setCommunicator(gameCommunicator);
     
+    this.doEvent("communicator.add");
+    
     return true;
   }
 
-  _setState(state) {
+  _setState(state, comment) {
     this.state = state;
-    this.broadcast("# status " + this.state);
-  }
-  
-  _queueStateMessage(message, data) {
-    process.nextTick(() => {
-        this._processStateMessage(message, data, true);
-      });
+    this.broadcast("# status " + this.state + ((comment===undefined)?"":": "+comment));
   }
   
   _processStateMessage(message, data, _internal) {
@@ -252,29 +268,13 @@ class GameServer {
     console.log("[server] processing message: ", message);
     
     switch (this.state) {
-      case "preparing0":
+      case "preparing":
         if (message === "client_ready") {
-          this._setState("preparing1");
-        }
-        break;
-      case "preparing1":
-        if (message === "client_ready") {
-          this._setState("preparing2");
-        }
-        break;
-      case "preparing2":
-        if (message === "client_ready") {
-          this._setState("preparing3");
-        }
-        break;
-      case "preparing3":
-        this._setState("ready");
-        
-        if (this.config["start_if_enough_players_connected"] === true) {
-          console.log("[server] four players connected. starting the game!");
-          this._queueStateMessage("go");
-        } else {
-          console.log("[server] the game is ready to start. Type 'go' to start");
+          this._setState("preparing", this.connectedClients+" of 4 clients");
+          
+          if (this.connectedClients == 4) {
+            this._setState("ready");
+          }
         }
         break;
       case "ready":
@@ -285,6 +285,7 @@ class GameServer {
           //TODO remove any move commands from the queue
           
           this._queueGameMessage("new", undefined, (answer) => {
+            this.hasEnded = false;
             this.turns = {
               "a": "white",
               "b": "white"
@@ -352,22 +353,14 @@ class GameServer {
               "timer": setInterval(() => { this._checkClocks(); }, 100) //update every tenth of a second
             };
             
+            this.doEvent("game.new");
           });
         }
         break;
       case "in_progress":
         switch (message) {
           case "game_ended":
-            //TODO remove any queued moves
-            //prevent any further moves from getting queued
-            this.isMoveQueued = {
-              "a": true,
-              "b": true,
-            };
-            //clear timer
-            clearInterval(this.timers["timer"]);
-            
-            //broadcast results
+            //assemble results
             let board = data.board;
             let result = data.result;
             let onTime = data.onTime;
@@ -409,21 +402,16 @@ class GameServer {
                 }
               }
             } else {
-              //regular mate
-              comment = `${this.turns[board]} mated.`;
+              if (data["comment"] !== undefined) {
+                //custom comment
+                comment = data["comment"]
+              } else {
+                //regular mate
+                comment = `${this.turns[board]} mated.`;
+              }
             }
             
-            //broadcast the result for the deciding board
-            this.broadcast(result+" {"+comment+"}", board);
-            
-            //broadcast result to the other board. Since the players of the teams, play different colors
-            //the result has to be inversed.
-            let otherBoard = (board=="a")?"b":"a";
-            let otherResult = result.split("-").reverse().join("-");
-            this.broadcast(otherResult+" {The other board finished}", otherBoard);
-            
-            this._setState("ready");
-            console.log("#the game is ready to start. Type 'go' to start a new game");
+            this._handleEndOfGame(board, result, comment);
             break;
           case "client_game_message":
             this._processClientGameMessage(data.client, data.message);
@@ -443,6 +431,50 @@ class GameServer {
     
     if (old_state != this.state) {
       console.log("[server] server state changed to", this.state);
+      this.doEvent("state.change");
+    }
+  }
+  
+  defeat(client, reason) {
+    if (this.hasEnded) {
+      return;
+    }
+    
+    let clientIdx = this.clients.indexOf(client);
+    
+    let board = this._getBoard(clientIdx);
+    let colorIdx = this._getColorIndex(clientIdx);
+    let color = this._getColor(clientIdx);
+    this._handleEndOfGame(board, `${1-colorIdx}-${colorIdx}`, `${color} on board ${board}: ` + reason);
+  }
+  
+  _handleEndOfGame(board, result, comment) {
+    //remove any queued moves
+    this._clearQueuedMoves();
+    
+    //prevent any further moves from getting queued
+    this.isMoveQueued = {
+      "a": true,
+      "b": true,
+    };
+    clearInterval(this.timers["timer"]);
+    this.hasEnded = true;
+    
+    //broadcast the result for the deciding board
+    this.broadcast(result+" {"+comment+"}", board);
+    
+    //broadcast result to the other board. Since the players of the teams, play different colors
+    //the result has to be inversed.
+    let otherBoard = (board=="a")?"b":"a";
+    let otherResult = result.split("-").reverse().join("-");
+    this.broadcast(otherResult+" {The other board finished}", otherBoard);
+    
+    this.doEvent("game.end");
+    
+    if (this.connectedClients < 4) {
+      this._setState("preparing");
+    } else {
+      this._setState("ready");
     }
   }
   

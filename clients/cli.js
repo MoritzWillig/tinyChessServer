@@ -22,7 +22,7 @@ class CLICreator {
       }
       
       let cligc = new CLIGameCommunicator(cliConfig);
-      this.doEvent("client.new", cligc);
+      this.doEvent("client.new", { communicator: cligc, position: parseInt(cliConfig["position"]) });
     }
   }
   

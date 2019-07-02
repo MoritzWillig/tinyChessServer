@@ -9,7 +9,9 @@ const url = require('url');
 const fs = require("fs");
 const readline = require('readline');
 
-config = JSON.parse(fs.readFileSync("./config.json"));
+let config = JSON.parse(fs.readFileSync("./config.json"));
+let applicationConfig = config["application"];
+let gameConfig = config["game"];
 
 /**
  * TODO
@@ -20,13 +22,6 @@ config = JSON.parse(fs.readFileSync("./config.json"));
  *    enables the web gui
 **/
 
-
-const gameserver = new GameServer(() => {
-  //TODO create new game here
-  let game = new Games.ChessCLIGame(config["game"]);
-  return game;
-}, config["game"]);
-
 let httpServer = null;
 let webserver = null;
 
@@ -34,6 +29,51 @@ let websocketserver = null;
 let clicreator = null;
 let websocketBoardAObserverServer = null;
 let websocketBoardBObserverServer = null;
+
+
+const gameserver = new GameServer(() => {
+  return new Games.ChessCLIGame(gameConfig);
+}, gameConfig);
+
+gameserver.on("server.close", function() {
+  console.log("[application] closing the server");
+  if (httpServer !== null) {
+    httpServer.close();
+  }
+  process.exit(0);
+});
+
+gameserver.on("state.change", function() {
+  switch (gameserver.state) {
+    case "ready":
+      if (applicationConfig["start_if_enough_players_connected"] === true) {
+        console.log("[application] four players connected. starting the game!");
+        gameserver.processMessage("go");
+      } else {
+        console.log("[application] the game is ready to start. Type 'go' to start");
+      }
+  }
+});
+
+gameserver.on("communicator.remove", function(data) {
+  if (applicationConfig["disconnect_as_defeat"] === true) {
+    gameserver.defeat(data.client, "disconnected from the server");
+  }
+});
+
+gameserver.on("game.end", function(bpgn) {
+  //if (applicationConfig["save"]["save_games"] === true) {
+  //  applicationConfig["save"]["save_dir"] ...
+  //  #TODO
+  //}
+  
+  if (applicationConfig["play_single_game_only"] === true) {
+    console.log("[application] server is set to single game mode");
+    gameserver.processMessage("close");
+  }
+});
+
+
 
 if (config["httpServer"]["serve_webclient"] === true) {
   webserver = new WebServer(config["httpServer"]);
@@ -51,19 +91,17 @@ if (config["clients"]["websocket"]["enabled"] === true) {
       client.close();
     }
   });
-  
-  console.log("Setup of the game server completed. Waiting for 4 players to connect.");
 }
 
 if (config["clients"]["cli"]["enabled"] === true) {
   clicreator = new CLICreator(config["clients"]["cli"]);
-  clicreator.on("client.new", (gameCommunicator) => {
-    if (!gameserver.addCommunicator(gameCommunicator)) {
+  clicreator.on("client.new", (data) => {
+    let communicator = data.communicator;
+    let position = data.position;
+    if (!gameserver.addCommunicator(communicator, position)) {
       client.close();
     }
   });
-  
-  console.log("Setup of the game server completed. Waiting for 4 players to connect.");
 }
 
 //observers
@@ -110,14 +148,6 @@ if (httpServer !== null) {
   httpServer.listen(config["httpServer"]["port"]);
 }
 
-gameserver.on("server.close", function() {
-  console.log("closing the server");
-  if (httpServer !== null) {
-    httpServer.close();
-  }
-  process.exit(0);
-});
-
 
 let rl = readline.createInterface({
   input: process.stdin,
@@ -125,9 +155,9 @@ let rl = readline.createInterface({
 });
 
 rl.on('line', (line) => {
-  gameserver.processMessage("console", line.trim());
+  gameserver.processMessage(line.trim());
 }).on('close', () => {
-  gameserver.processMessage("console", "close");
+  gameserver.processMessage("close");
 });
 
 
@@ -135,5 +165,4 @@ if (clicreator !== null) {
   clicreator.createClients();
 }
 
-
-
+console.log("Setup of the game server completed. Waiting for players to connect.");

@@ -1,13 +1,21 @@
 {
   "appname": "tinyChessServer",
   
+  "application": {
+    "start_if_enough_players_connected": true,
+    "play_single_game_only": false,
+    "disconnect_as_defeat": false,
+    "save": {
+      "save_games": false,
+      "save_dir": "./games_log/"
+    }
+  },
+  
   "game": {
     "variant": "bughouse",
     "time": 300,
     "backend_command": "python3 -u chessBackend.py",
-    "backend_cwd": "./backend/",
-    
-    "start_if_enough_players_connected": false
+    "backend_cwd": "./backend/"
   },
   
   "httpServer": {

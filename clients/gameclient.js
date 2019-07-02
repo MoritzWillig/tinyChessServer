@@ -64,6 +64,7 @@ class GameClient {
       otherBoard: false
     };
     this.setState("disconnected");
+    this._communicator = null;
   }
   
   setCommunicator(communicator) {
@@ -76,7 +77,7 @@ class GameClient {
     });
     this._communicator.on("close", (data) => {
       this.close();
-      this.doEvent("connection.close", data);
+      this.doEvent("connection.close", {communicator: communicator, communicatorData: data});
     });
     
     this.setState("negotiating");
