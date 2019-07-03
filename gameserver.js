@@ -26,6 +26,11 @@ class GameServer {
      * the team. The bpgn of an finished game can still be read.
     **/
     this.hasEnded = false;
+    /**
+     * contains game result, if the game did not end due to a mate.
+     *
+     * The result refers to board A
+    **/
     this.exceptionalEnd = undefined;
     this.gameComment = undefined;
     
@@ -503,7 +508,15 @@ class GameServer {
     let board = this._getBoard(clientIdx);
     let colorIdx = this._getColorIndex(clientIdx);
     let color = this._getColor(clientIdx);
-    this._handleEndOfGame(board, `${1-colorIdx}-${colorIdx}`, `${color} on board ${board}: ` + reason, false);
+    
+    this._handleEndOfGame(board, `${colorIdx}-${1-colorIdx}`, `${color} on board ${board}: ` + reason, false);
+  }
+  
+  _determineResultForBoardA(decidingBoard, result) {
+    if (decidingBoard == "a") {
+      return result;
+    }
+    return result.split("-").reverse().join("-");
   }
   
   _handleEndOfGame(board, result, comment, regularEnd) {
@@ -518,8 +531,8 @@ class GameServer {
     clearInterval(this.timers["timer"]);
     this.hasEnded = true;
     if (!regularEnd) {
-      this.exceptionalEnd = result;
-      this.gameComment = comment;
+      this.exceptionalEnd = this._determineResultForBoardA(board, result);
+      this.gameComment = `on board ${board} [${result}]: ${comment}`;
     }
     
     //broadcast the result for the deciding board
