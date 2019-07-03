@@ -7,15 +7,20 @@
     "disconnect_as_defeat": false,
     "save": {
       "save_games": false,
-      "save_dir": "./games_log/"
+      "save_dir": "./games_log/",
+      
+      "meta": {
+        "event": "TU Darmstadt Bughouse Championship",
+        "site": "",
+        "round": "1"
+      }
     }
   },
   
   "game": {
     "variant": "bughouse",
     "time": 300,
-    "backend_command": "python3 -u chessBackend.py",
-    "backend_cwd": "./backend/"
+    "backend_command": "python3 -u ./backend/chessBackend.py"
   },
   
   "httpServer": {

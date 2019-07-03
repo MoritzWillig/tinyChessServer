@@ -96,6 +96,10 @@ class ChessCLIGame extends Game {
     }
   }
   
+  getBpgn(data) {
+    this._sendMessage("bpgn"+JSON.stringify(data)+"\n");
+  }
+  
   close() {
     this._sendMessage("close\n");
   }

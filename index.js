@@ -61,18 +61,24 @@ gameserver.on("communicator.remove", function(data) {
   }
 });
 
-gameserver.on("game.end", function(bpgn) {
-  //if (applicationConfig["save"]["save_games"] === true) {
-  //  applicationConfig["save"]["save_dir"] ...
-  //  #TODO
-  //}
-  
+function testSingleGame() {
   if (applicationConfig["play_single_game_only"] === true) {
     console.log("[application] server is set to single game mode");
     gameserver.processMessage("close");
   }
-});
+}
 
+gameserver.on("game.end", function(bpgn) {
+  //TODO duplicated code, ... "close" should wait for the game to get saved ... 
+  if (applicationConfig["save"]["save_games"] === true) {
+    gameserver.saveBpgn(applicationConfig["save"]["save_dir"], applicationConfig["save"]["meta"], (answer, filename) => {
+      console.log("saved bpgn to "+filename);
+      testSingleGame();
+    });
+  } else {
+    testSingleGame();
+  }
+});
 
 
 if (config["httpServer"]["serve_webclient"] === true) {

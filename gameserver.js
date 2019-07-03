@@ -26,6 +26,9 @@ class GameServer {
      * the team. The bpgn of an finished game can still be read.
     **/
     this.hasEnded = false;
+    this.exceptionalEnd = undefined;
+    this.gameComment = undefined;
+    
     this.game.on("game.answer", (answer) => {
       this._processGameAnswer(answer);
     });
@@ -112,8 +115,50 @@ class GameServer {
     }
   }
   
+  _toLength2Str(num) {
+    if (num<10) {
+      return "0"+num;
+    }
+    return ""+num;
+  }
+  
+  _generateBpgnFileName() {
+    //create human readable names
+    let now = new Date();
+    let year = now.getFullYear();
+    let month = this._toLength2Str(now.getMonth());
+    let day = this._toLength2Str(now.getDate());
+    let hour = this._toLength2Str(now.getHours());
+    let minute = this._toLength2Str(now.getMinutes());
+    let sec = this._toLength2Str(now.getSeconds());
+    
+    //add timestamp to get unique names.
+    let ts = +now;
+    
+    return `${year}-${month}-${day}.${hour}_${minute}_${sec}.${ts}.bpgn`;
+  }
+  
+  saveBpgn(save_dir, metaData, fn) {
+    let data = {
+      "filename": save_dir+"/"+this._generateBpgnFileName(),
+      "playernames": ["WhiteA", "BlackB", "BlackA", "WhiteB"],
+      "meta": {
+        "timecontrol": ""+this.config["time"]+"+0",
+        "event": metaData["event"],
+        "site": metaData["site"],
+        "round": metaData["round"]
+      },
+      "result": this.exceptionalEnd,
+      "result_comment": this.gameComment
+    };
+    
+    this._queueGameMessage("bpgn", data, (answer) => {
+      fn(answer, data["filename"]);
+    });
+  }
+  
   _queueGameMessage(type, data, fn) {
-    if ((type!="fen") && (type!="new") && (type!="close") && (type!="move")) {
+    if ((type!="fen") && (type!="new") && (type!="close") && (type!="move") && (type!="bpgn")) {
       throw new Error("unknown message type: "+ type);
     }
     
@@ -139,11 +184,11 @@ class GameServer {
     }
   }
   
-  _processGameAnswer(answer) {
+  _processGameAnswer(answer, ignore) {
     //remove processed message
     let processedMessage = this.game_messages.splice(0, 1)[0];
     
-    if (processedMessage.invalid === false) {
+    if (ignore !== true) {
       processedMessage.callback(answer);
     }
     
@@ -158,6 +203,10 @@ class GameServer {
    * to the message queue.
   **/
   _sendGameRequest(message) {
+    if (message.invalid === true) {
+      this._processGameAnswer(undefined, true);
+    }
+    
     switch (message.type) {
       case "fen":
         this.game.getFen(message.data);
@@ -170,6 +219,9 @@ class GameServer {
         break;
       case "move":
         this.game.makeMove(message.data);
+        break;
+      case "bpgn":
+        this.game.getBpgn(message.data);
         break;
       default:
         throw new Error("unknown message type: "+message.type);
@@ -286,6 +338,8 @@ class GameServer {
           
           this._queueGameMessage("new", undefined, (answer) => {
             this.hasEnded = false;
+            this.exceptionalEnd = undefined;
+            this.gameComment = undefined;
             this.turns = {
               "a": "white",
               "b": "white"
@@ -365,8 +419,12 @@ class GameServer {
             let result = data.result;
             let onTime = data.onTime;
             let comment = "";
+            let regularEnd = true;
             
             if (result == "*") {
+              regularEnd = false;
+              onTime = true;
+              
               //no more moves to play on both boards. check timers.
               let onTheMoveA = (this.turns["a"]=="white")?0:1;
               let onTheMoveB = (this.turns["b"]=="white")?0:1;
@@ -375,7 +433,6 @@ class GameServer {
                 //the same team has to make a move on both boards
                 board = "a";
                 result = `${onTheMoveA}-${1-onTheMoveA}`;
-                onTime = true;
                 comment = "The team can play no more moves. Time will run out.";
               } else {
                 //check which player of both teams will run out of time earlier.
@@ -385,23 +442,24 @@ class GameServer {
                 if (remainingA == remainingB) {
                   board = "a";
                   result = "1/2-1/2";
-                  onTime = true;
                   comment = "No more moves to play. Both teams have the _exact_ same amount of time remaining!";
                 } else {
                   if (remainingA < remainingB) {
                     board = "a";
                     result = `${onTheMoveA}-${1-onTheMoveA}`;
-                    onTime = true;
                     comment = `No more moves to play. ${(onTheMoveA==0)?"White":"Black"} will run out of time.`;
                   } else {
                     board = "b";
                     result = `${onTheMoveB}-${1-onTheMoveB}`;
-                    onTime = true;
                     comment = `No more moves to play. ${(onTheMoveB==0)?"White":"Black"} will run out of time.`;
                   }
                 }
               }
             } else {
+              if (onTime == true) {
+                regularEnd = false;
+              }
+              
               if (data["comment"] !== undefined) {
                 //custom comment
                 comment = data["comment"]
@@ -411,7 +469,7 @@ class GameServer {
               }
             }
             
-            this._handleEndOfGame(board, result, comment);
+            this._handleEndOfGame(board, result, comment, regularEnd);
             break;
           case "client_game_message":
             this._processClientGameMessage(data.client, data.message);
@@ -445,10 +503,10 @@ class GameServer {
     let board = this._getBoard(clientIdx);
     let colorIdx = this._getColorIndex(clientIdx);
     let color = this._getColor(clientIdx);
-    this._handleEndOfGame(board, `${1-colorIdx}-${colorIdx}`, `${color} on board ${board}: ` + reason);
+    this._handleEndOfGame(board, `${1-colorIdx}-${colorIdx}`, `${color} on board ${board}: ` + reason, false);
   }
   
-  _handleEndOfGame(board, result, comment) {
+  _handleEndOfGame(board, result, comment, regularEnd) {
     //remove any queued moves
     this._clearQueuedMoves();
     
@@ -459,6 +517,10 @@ class GameServer {
     };
     clearInterval(this.timers["timer"]);
     this.hasEnded = true;
+    if (!regularEnd) {
+      this.exceptionalEnd = result;
+      this.gameComment = comment;
+    }
     
     //broadcast the result for the deciding board
     this.broadcast(result+" {"+comment+"}", board);

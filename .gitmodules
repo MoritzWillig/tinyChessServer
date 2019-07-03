@@ -1,3 +1,4 @@
 [submodule "backend/python-chess"]
 	path = backend/python-chess
 	url = git@github.com:TimSchneider42/python-chess.git
+	branch = master
