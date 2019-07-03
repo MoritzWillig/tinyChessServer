@@ -28,6 +28,8 @@ Illegal moves are answered with "illegal". Malformed inputs are answered
 with "rejected".
 '''
 
+PLAYER_NAMES = [["a", "A"], ["b", "B"]]
+
 
 def save_bpgn(file, boards, playernames, meta, result=None, result_comment=None):
     game = chess.pgn.Game.from_bughouse_boards(boards)
@@ -52,7 +54,8 @@ def save_bpgn(file, boards, playernames, meta, result=None, result_comment=None)
             for i, b in enumerate(boards):
                 if b.is_checkmate():
                     losing_player = b.turn
-                    result_comment = "{} checkmated".format(pychess_player_names[i][losing_player])
+                    result_comment = "Player {} ({}) checkmated".format(
+                        PLAYER_NAMES[i][losing_player], pychess_player_names[i][losing_player])
                     break
     game.headers["Result"] = result
     game.headers["ResultComment"] = result_comment
