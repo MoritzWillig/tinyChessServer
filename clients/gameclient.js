@@ -161,6 +161,10 @@ class GameClient {
     return (this._state != "disconnected");
   }
   
+  isReady() {
+    return (this._state == "ready");
+  }
+  
   close() {
     if (!this.isActive()) {
       return;

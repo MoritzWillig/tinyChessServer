@@ -168,7 +168,6 @@ class GameServer {
       "result": this.exceptionalEnd,
       "result_comment": this.gameComment
     };
-    console.log(data);
     
     this._queueGameMessage("bpgn", data, (answer) => {
       fn(answer, data["filename"]);
@@ -332,6 +331,14 @@ class GameServer {
     this.broadcast("# status " + this.state + ((comment===undefined)?"":": "+comment));
   }
   
+  _getNumberOfReadyClients() {
+    let readyCount = 0;
+    for (let client of this.clients) {
+      readyCount += client.isReady()?1:0;
+    }
+    return readyCount;
+  }
+  
   _processStateMessage(message, data, _internal) {
     let old_state = this.state;
     
@@ -340,9 +347,10 @@ class GameServer {
     switch (this.state) {
       case "preparing":
         if (message === "client_ready") {
-          this._setState("preparing", this.connectedClients+" of 4 clients");
+          let readyCount = this._getNumberOfReadyClients();
+          this._setState("preparing", ""+readyCount+" of 4 ready clients");
           
-          if (this.connectedClients == 4) {
+          if (readyCount == 4) {
             this._setState("ready");
           }
         }
@@ -483,7 +491,7 @@ class GameServer {
             } else {
               if (onTime == true) {
                 regularEnd = false;
-                data["comment"] = `${this.turns[board]} run out of time.`
+                data["comment"] = `${this.turns[board]} ran out of time.`
               }
               
               if (data["comment"] !== undefined) {
