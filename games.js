@@ -97,7 +97,7 @@ class ChessCLIGame extends Game {
   }
   
   getBpgn(data) {
-    this._sendMessage("bpgn"+JSON.stringify(data)+"\n");
+    this._sendMessage("bpgn "+JSON.stringify(data)+"\n");
   }
   
   close() {

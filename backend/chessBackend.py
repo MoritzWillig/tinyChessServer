@@ -1,10 +1,9 @@
 import os
-os.sys.path.insert(0, os.path.abspath("./backend/python-chess"))
-
 import sys
 import datetime
 import json
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "python-chess")))
 import chess
 import chess.pgn
 import chess.variant
@@ -29,117 +28,118 @@ Illegal moves are answered with "illegal". Malformed inputs are answered
 with "rejected".
 '''
 
+
 def save_bpgn(file, boards, playernames, meta, result=None, result_comment=None):
-  game = chess.pgn.Game.from_bughouse_boards(boards)
-  game.headers["WhiteA"] = playernames[0]
-  game.headers["BlackA"] = playernames[2]
-  game.headers["WhiteB"] = playernames[3]
-  game.headers["BlackB"] = playernames[1]
-  game.headers["TimeControl"] = meta["timecontrol"]
-  game.headers["Event"] = meta["event"]
-  game.headers["Site"] = meta["site"]
-  game.headers["Date"] = datetime.datetime.now().isoformat()
-  game.headers["Round"] = meta["round"]
+    game = chess.pgn.Game.from_bughouse_boards(boards)
+    game.headers["WhiteA"] = playernames[0]
+    game.headers["BlackA"] = playernames[2]
+    game.headers["WhiteB"] = playernames[3]
+    game.headers["BlackB"] = playernames[1]
+    game.headers["TimeControl"] = meta["timecontrol"]
+    game.headers["Event"] = meta["event"]
+    game.headers["Site"] = meta["site"]
+    game.headers["Date"] = datetime.datetime.now().isoformat()
+    game.headers["Round"] = meta["round"]
 
-  pychess_player_names = [[playernames[2], playernames[0]], [playernames[1], playernames[3]]]
+    pychess_player_names = [[playernames[2], playernames[0]], [playernames[1], playernames[3]]]
 
-  if result is None:
-    if boards.is_threefold_repetition():
-        result = "1/2-1/2"
-        result_comment = "Game drawn by threefold repetition"
-    elif boards.is_checkmate():
-        result = boards.result()
-        for i, b in enumerate(boards):
-            if b.is_checkmate():
-                losing_player = b.turn
-                result_comment = "{} checkmated".format(pychess_player_names[i][losing_player])
-                break
-  game.headers["Result"] = result
-  game.headers["ResultComment"] = result_comment
+    if result is None:
+        if boards.is_threefold_repetition():
+            result = "1/2-1/2"
+            result_comment = "Game drawn by threefold repetition"
+        elif boards.is_checkmate():
+            result = boards.result()
+            for i, b in enumerate(boards):
+                if b.is_checkmate():
+                    losing_player = b.turn
+                    result_comment = "{} checkmated".format(pychess_player_names[i][losing_player])
+                    break
+    game.headers["Result"] = result
+    game.headers["ResultComment"] = result_comment
 
-  exporter = chess.pgn.FileExporter(file, headers=True, comments=False, variations=False)
-  game.accept(exporter)
+    exporter = chess.pgn.FileExporter(file, headers=True, comments=False, variations=False)
+    game.accept(exporter)
 
 
-while True:
-  try:
-    command = input();
-  except:
-    break;
-  
-  if command=="close":
-    print("closing", flush=True)
-    break
-    
-  if command=="new":
-    print("new", flush=True)
-    board = chess.variant.BughouseBoards()
-    continue
-    
-  if (len(command) > 4) and (command[0:4]=="bpgn"):
-    data = json.loads(command[4:])
-    #data = {
-    #  "filename": "/chess/logs/game0001.bpgn",
-    #  "playernames": ["WhiteA", "BlackB", "BlackA", "WhiteB"],
-    #  "meta": {
-    #    "timecontrol": "300+0",
-    #    "event": "event name",
-    #    "site": "",
-    #    "round": "1"
-    #  },
-    #  "result": "1-0", //optional: forfeit on time, ...
-    #  "result_comment", //optional
-    #}
-    
-    playernames = data["playernames"]
-    meta = data["meta"]
-    result = data["result"] if "result" in data else None
-    result_comment = data["result_comment"] if "result_comment" in data else None
-  
-    with open(data["filename"], "w", encoding="utf-8") as f:
-      save_bpgn(f, board, playernames, meta, result, result_comment)
-      print("ok", flush=True)
-      continue
-  
-    
-  if command=="fen":
-    print(board.bfen, flush=True)
-    continue
-  
-  if command=="fen a":
-    print(str(board[0].fen()), flush=True)
-    continue
-  
-  if command=="fen b":
-    print(str(board[1].fen()), flush=True)
-    continue
-  
-  # the command is a move: <board> ">" <uci move>
-  # e.g.: a>B@f1
-  try:
-    if command[0] in ["a", "b"]:
-      board_id = 0 if command[0] == "a" else 1
-      single_board = board[board_id]
+BOARD_IDS = {
+    "a": 0,
+    "b": 1
+}
+COLORS = [chess.WHITE, chess.BLACK]
+BOARDS = [chess.variant.BOARD_A, chess.variant.BOARD_B]
+
+close = False
+while not close:
+    try:
+        command = input()
+    except:
+        break
+
+    cmd, *params = command.strip().split()
+
+    if cmd == "close":
+        close = True
+        print("closing")
+    elif cmd == "new":
+        print("new")
+        board = chess.variant.BughouseBoards()
+    elif cmd == "bpgn":
+        data = json.loads(" ".join(params))
+        # data = {
+        #  "filename": "/chess/logs/game0001.bpgn",
+        #  "playernames": ["WhiteA", "BlackB", "BlackA", "WhiteB"],
+        #  "meta": {
+        #    "timecontrol": "300+0",
+        #    "event": "event name",
+        #    "site": "",
+        #    "round": "1"
+        #  },
+        #  "result": "1-0", //optional: forfeit on time, ...
+        #  "result_comment", //optional
+        # }
+
+        playernames = data["playernames"]
+        meta = data["meta"]
+        result = data["result"] if "result" in data else None
+        result_comment = data["result_comment"] if "result_comment" in data else None
+
+        os.makedirs(os.path.dirname(data["filename"]), exist_ok=True)
+        with open(data["filename"], "w", encoding="utf-8") as f:
+            save_bpgn(f, board, playernames, meta, result, result_comment)
+        print("ok")
+    elif cmd == "fen":
+        if len(params) == 0:
+            print(board.fen())
+        elif params[0] in BOARD_IDS:
+            print(str(board[BOARD_IDS[params[0]]].fen()))
+        else:
+            print("fen: No such board \"{}\"".format(params[0]), file=sys.stderr)
+    elif cmd == "move":
+        # the command is a move: move <board> <uci move> <clock>
+        # e.g.: move a B@f1 117.2
+        try:
+            board_name, uci, clock = params
+            if board_name in BOARD_IDS:
+                single_board = board[BOARD_IDS[board_name]]
+                move = chess.Move.from_uci(uci)
+                move.move_time = float(clock)
+                if single_board.is_legal(move):
+                    single_board.push(move)
+                    pockets = "[{}] [{}]:[{}] [{}]".format(*(board[b].pockets[c] for b in BOARDS for c in COLORS))
+
+                    if board.is_game_over():
+                        print("ok" + pockets + "|" + board.result())
+                    else:
+                        print("ok" + pockets)
+                else:
+                    print("illegal")
+            else:
+                print("rejected")
+
+        except:
+            print("rejected")
     else:
-      print("rejected", flush=True)
-      continue
-    
-    move = chess.Move.from_uci(command[2:])
-    move.board_id=board_id
-    move.move_time = 1.0 #TODO Clock of the player moving
-  except:
-    print("rejected", flush=True)
-    continue
-  
-  if not move in single_board.legal_moves:
-    print("illegal", flush=True)
-  else:
-    single_board.push(move)
-    
-    pockets = "["+str(board[0].pockets[chess.WHITE])+"] ["+str(board[0].pockets[chess.BLACK])+"]:" +\
-              "["+str(board[1].pockets[chess.WHITE])+"] ["+str(board[1].pockets[chess.BLACK])+"]"
-    
-    if board.is_game_over():
-      print("ok"+pockets+"|"+board.result(), flush=True)
-    else:
-      print("ok"+pockets, flush=True)
+        print("Command not understood: \"{}\"".format(command), file=sys.stderr)
+
+    sys.stderr.flush()
+    sys.stdout.flush()

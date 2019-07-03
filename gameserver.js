@@ -381,7 +381,6 @@ class GameServer {
                 client.sendMessage("playother");
               }
             }
-            
             //start timers
             //The "paused" flag is only set during the time, the server checks for a received move
             //to be valid.
@@ -671,7 +670,8 @@ class GameServer {
         
         //try to make the move
         this.isMoveQueued[board] = true;
-        this._queueGameMessage("move", board+">"+parameters, answer => {
+        // TODO: add proper clock
+        this._queueGameMessage("move", "move " + board + " " + parameters + " " + "120.0", answer => {
           this.isMoveQueued[board] = false;
           
           //For a valid move, update the timers.
