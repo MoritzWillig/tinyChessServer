@@ -51,6 +51,8 @@ class GameServer {
       "b": []
     };
     
+    this.playerNames = ["WhiteA", "BlackB", "BlackA", "WhiteB"];
+    
     this.turns = {
       "a": "white",
       "b": "white"
@@ -80,9 +82,19 @@ class GameServer {
     }*/
   }
   
+  _getDefaultPlayerName(clientIdx) {
+    let defaultPlayerNames = ["WhiteA", "BlackB", "BlackA", "WhiteB"];
+    return defaultPlayerNames[clientIdx];
+  }
+  
   _createClient() {
     let client = new GameClient()
-    client.on("client.ready", (client) => {
+    client.on("client.ready", () => {
+      let clientIdx = this.clients.indexOf(client);
+      
+      let name = client.getFirstFeatureValue("myname");
+      this.playerNames[clientIdx] = (name === null)?this._getDefaultPlayerName(clientIdx):name;
+      
       this._processStateMessage("client_ready", { client: client });
     });
     
@@ -146,7 +158,7 @@ class GameServer {
   saveBpgn(save_dir, metaData, fn) {
     let data = {
       "filename": save_dir+"/"+this._generateBpgnFileName(),
-      "playernames": ["WhiteA", "BlackB", "BlackA", "WhiteB"],
+      "playernames": this.playerNames,
       "meta": {
         "timecontrol": ""+this.config["time"]+"+0",
         "event": metaData["event"],
@@ -156,6 +168,7 @@ class GameServer {
       "result": this.exceptionalEnd,
       "result_comment": this.gameComment
     };
+    console.log(data);
     
     this._queueGameMessage("bpgn", data, (answer) => {
       fn(answer, data["filename"]);
@@ -358,6 +371,14 @@ class GameServer {
               "a": false,
               "b": false,
             };
+            
+            //reset the names of all disconnected players
+            for (let i of [0, 1, 2, 3]) {
+              let client = this.clients[i];
+              if (!client.isActive()) {
+                  this.playerNames[i] = this._getDefaultPlayerName(i);
+              }
+            }
             
             for (let client of this.observers["a"]) {
               client.sendMessage("new");

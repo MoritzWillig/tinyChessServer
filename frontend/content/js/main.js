@@ -140,7 +140,7 @@ function connect() {
       case "xboard":
         break;
       case "protover":
-        ws.send("feature san=1, time=1, variants=\"bughouse\", otherboard=1, colors=1, time=1, done=1");
+        ws.send('feature san=1, time=1, variants=\"bughouse\", otherboard=1, myname="debug_client", colors=1, time=1, done=1');
         break;
       //case
     }

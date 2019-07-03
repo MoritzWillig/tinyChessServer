@@ -52,6 +52,8 @@ class CLIGameCommunicator extends GameCommunicator {
   constructor(cliConfig) {
     super();
     
+    this.isClosing = false;
+    
     this.child = child_process.exec(cliConfig["command"], {
       cwd: cliConfig["cwd"],
       encoding: "utf8"
@@ -65,7 +67,7 @@ class CLIGameCommunicator extends GameCommunicator {
 
     this.child.on('close', (code) => {
       console.log(`[cli client] process exited with code ${code}`);
-      this.doEvent("close", { code: code, reason: "" });
+      this.close(code, "process exited");
     });
     
     this.rl = readline.createInterface({
@@ -90,11 +92,18 @@ class CLIGameCommunicator extends GameCommunicator {
     } catch(e) {
       console.log("[cli client] error writing to stdin.");
       console.log("[cli client]", e);
-      this.close();
+      this.close(-1, "error writing to stdin");
     }
   }
   
-  close() {
+  close(code, reason) {
+    if (this.isClosing) {
+      return;
+    }
+    this.isClosing = true;
+    
+    this.sendMessage("quit");
+    this.doEvent("close", { code: code, reason: "" });
   }
   
 }

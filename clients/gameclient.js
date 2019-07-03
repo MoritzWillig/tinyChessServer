@@ -77,7 +77,6 @@ class GameClient {
     });
     this._communicator.on("close", (data) => {
       this.close();
-      this.doEvent("connection.close", {communicator: communicator, communicatorData: data});
     });
     
     this.setState("negotiating");
@@ -167,7 +166,10 @@ class GameClient {
       return;
     }
     
+    let communicator = this._communicator;
     this._reset();
+    communicator.close();
+    this.doEvent("connection.close", {communicator: communicator});
   }
   
   setState(state) {
