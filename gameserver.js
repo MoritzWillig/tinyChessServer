@@ -457,6 +457,7 @@ class GameServer {
             } else {
               if (onTime == true) {
                 regularEnd = false;
+                data["comment"] = `${this.turns[board]} run out of time.`
               }
               
               if (data["comment"] !== undefined) {
