@@ -668,10 +668,11 @@ class GameServer {
         let clock = this.timers[board][this._getColorIndex(playerIdx)];
         clock.paused = true;
         
+        let clock_remaining = clock["remaining"] - (currentTime - clock["lastStart"]);
+        
         //try to make the move
         this.isMoveQueued[board] = true;
-        // TODO: add proper clock
-        this._queueGameMessage("move", "move " + board + " " + parameters + " " + "120.0", answer => {
+        this._queueGameMessage("move", "move " + board + " " + parameters + " " + (clock_remaining/1000), answer => {
           this.isMoveQueued[board] = false;
           
           //For a valid move, update the timers.
@@ -709,7 +710,7 @@ class GameServer {
             this._processStateMessage("game_ended", { board:board, result: result, onTime: false });
           } else {
             //update the current and start the other clock
-            clock["remaining"] -= currentTime - clock["lastStart"];
+            clock["remaining"] = clock_remaining;
             clock["lastStart"] = null;
             
             let otherClock = this.timers[board][this._getColorIndex(playerIdx)==0?1:0];

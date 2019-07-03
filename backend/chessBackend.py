@@ -20,7 +20,7 @@ bpgn: prints the bpgn
 fen: prints the current fen
 fen a: prints the current fen for board a
 fen b: prints the current fen for board b
-<board_name> ">" <move>: make move on board "a" or "b"
+<board_name> " " <move> <clock>: make move on board "a" or "b"
 
 Every input is answered by the application. Valid moves are answered with:
 "ok[" <pocket_a> "] [" <pocket_b> "]" ["|" <game_outcome>]
