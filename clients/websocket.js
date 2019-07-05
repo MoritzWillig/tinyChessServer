@@ -2,7 +2,7 @@
 
 const GameCommunicator = require("./gameclient.js").GameCommunicator;
 const WebSocket = require('ws');
-
+const url = require('url');
 
 class WebSocketGameServer {
   
@@ -13,9 +13,27 @@ class WebSocketGameServer {
     
     this.wss = new WebSocket.Server({ noServer: true });
     
-    this.wss.on('connection', (ws) => {
+    this.wss.on('connection', (ws, req) => {
+      var url_parts = url.parse(req.url, true);
+      var query = url_parts.query;
+      
+      let position = undefined;
+      if ("A" in query) {
+        position = 0;
+      }
+      if ("a" in query) {
+        position = 2;
+      }
+      if ("B" in query) {
+        position = 3;
+      }
+      if ("b" in query) {
+        position = 1;
+      }
+      
+      
       let wsgc = new WebSocketGameCommunicator(ws);
-      this.doEvent("client.new", wsgc);
+      this.doEvent("client.new", { communicator: wsgc, position: position });
     });
   }
   

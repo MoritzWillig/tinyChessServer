@@ -92,8 +92,10 @@ if (config["httpServer"]["enabled"] === true) {
 
 if (config["clients"]["websocket"]["enabled"] === true) {
   websocketserver = new WebSocketGameServer();
-  websocketserver.on("client.new", (gameCommunicator) => {
-    if (!gameserver.addCommunicator(gameCommunicator)) {
+  websocketserver.on("client.new", (data) => {
+    let gameCommunicator = data.communicator;
+    let position = data.position;
+    if (!gameserver.addCommunicator(gameCommunicator, position)) {
       client.close();
     }
   });
