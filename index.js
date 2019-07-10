@@ -170,11 +170,13 @@ let rl = readline.createInterface({
   output: process.stdout
 });
 
-rl.on('line', (line) => {
-  gameserver.processMessage(line.trim());
-}).on('close', () => {
-  gameserver.processMessage("close");
-});
+if (config["application"]["listen_to_stdin"]) {
+  rl.on('line', (line) => {
+    gameserver.processMessage(line.trim());
+  }).on('close', () => {
+    gameserver.processMessage("close");
+  });
+}
 
 
 if (clicreator !== null) {
