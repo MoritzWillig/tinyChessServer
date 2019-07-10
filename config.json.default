@@ -8,7 +8,7 @@
     "save": {
       "save_games": false,
       "save_dir": "./games_log/",
-      
+      "filename": null,
       "meta": {
         "event": "TU Darmstadt Bughouse Championship",
         "site": "",

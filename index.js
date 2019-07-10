@@ -78,7 +78,8 @@ function testSingleGame() {
 gameserver.on("game.end", function(bpgn) {
   //TODO duplicated code, ... "close" should wait for the game to get saved ... 
   if (applicationConfig["save"]["save_games"] === true) {
-    gameserver.saveBpgn(applicationConfig["save"]["save_dir"], applicationConfig["save"]["meta"], (answer, filename) => {
+    gameserver.saveBpgn(applicationConfig["save"]["save_dir"], applicationConfig["save"]["filename"],
+        applicationConfig["save"]["meta"], (answer, filename) => {
       console.log("[application] saved bpgn to "+filename);
       testSingleGame();
     });

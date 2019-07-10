@@ -155,9 +155,13 @@ class GameServer {
     return `${year}-${month}-${day}.${hour}_${minute}_${sec}.${ts}.bpgn`;
   }
   
-  saveBpgn(save_dir, metaData, fn) {
+  saveBpgn(save_dir, bpgn_filename, metaData, fn) {
+    let filename = bpgn_filename;
+    if (filename === null) {
+      filename = this._generateBpgnFileName()
+    }
     let data = {
-      "filename": save_dir+"/"+this._generateBpgnFileName(),
+      "filename": save_dir+"/"+filename,
       "playernames": this.playerNames,
       "meta": {
         "timecontrol": ""+this.config["time"]+"+0",
