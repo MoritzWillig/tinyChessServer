@@ -8,8 +8,15 @@ const http = require('http');
 const url = require('url');
 const fs = require("fs");
 const readline = require('readline');
+const process = require('process');
 
-let config = JSON.parse(fs.readFileSync("./config.json"));
+let config_file = "config.json";
+
+if (process.argv.length > 2) {
+  config_file = process.argv.slice(2)[0];
+}
+
+let config = JSON.parse(fs.readFileSync(config_file));
 let applicationConfig = config["application"];
 let gameConfig = config["game"];
 
