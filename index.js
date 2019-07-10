@@ -116,14 +116,14 @@ if (config["clients"]["cli"]["enabled"] === true) {
 if (config["observers"]["websocket"]["enabled"] === true) {
   websocketBoardAObserverServer = new WebSocketGameServer();
   websocketBoardAObserverServer.on("client.new", (client) => {
-    if (!gameserver.addObserver("a", client)) {
+    if (!gameserver.addObserver("a", client.communicator)) {
       client.close();
     }
   });
   
   websocketBoardBObserverServer = new WebSocketGameServer();
   websocketBoardBObserverServer.on("client.new", (client) => {
-    if (!gameserver.addObserver("b", client)) {
+    if (!gameserver.addObserver("b", client.communicator)) {
       client.close();
     }
   });
