@@ -76,8 +76,8 @@ Vue.methds = {
 /* Create Vuex Store */
 const store = new Vuex.Store({
   state: {
-    wsA: new WebSocket("ws://localhost:80/websocketObserverA"),
-    wsB: new WebSocket("ws://localhost:80/websocketObserverB"),
+    wsA: new WebSocket("ws://localhost:8080/websocketObserverA"),
+    wsB: new WebSocket("ws://localhost:8080/websocketObserverB"),
     wsEvents: [],
     games: {
       "boardA": new Chess(),
@@ -230,6 +230,13 @@ const store = new Vuex.Store({
       state.pockets['boardA']['black'] = []
       state.pockets['boardB']['white'] = []
       state.pockets['boardB']['black'] = []
+      state.boards['boardA'] = state.games['boardA'].fen()
+      state.boards['boardB'] = state.games['boardB'].fen()
+    },
+    undo(state){
+      console.log('undo')
+      state.games['boardA'].undo()
+      state.games['boardB'].undo()
       state.boards['boardA'] = state.games['boardA'].fen()
       state.boards['boardB'] = state.games['boardB'].fen()
     },

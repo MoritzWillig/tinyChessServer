@@ -26,6 +26,7 @@
     <div class="option-buttons" style="margin-top: 1em">
       <a class="button" @click="newGame">New Game</a>
       <a class="button" @click="currentOption = 'walkThrough'">Walk through</a>
+      <a class="button" @click="undo">Undo</a>
       <!--<a class="button" @click="joinServer">Join Game</a>
       <a class="button disabled">See Websocket Connections</a>-->
     </div>
@@ -64,6 +65,9 @@ export default {
     },
     newGame(){
       this.$store.commit('newGame')
+    },
+    undo(){
+      this.$store.commit('undo')
     }
   }
 }
