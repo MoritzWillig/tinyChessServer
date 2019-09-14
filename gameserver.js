@@ -698,7 +698,7 @@ class GameServer {
       case "tellics":
         let otherPlayer2 = this.clients[this._getPartner(playerIdx)];
         if (message.startsWith("tellics ptell") && message.trim().length > "tellics ptell ".length)
-          otherPlayer2.sendMessage(message.trim().substr(7));
+          otherPlayer2.sendMessage(message.trim().substr(8));
         break;
       case "move":
         if (this.turns[board] != playerColor) {
