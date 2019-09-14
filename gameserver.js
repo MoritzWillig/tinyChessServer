@@ -695,6 +695,11 @@ class GameServer {
         let otherPlayer = this.clients[this._getPartner(playerIdx)];
         otherPlayer.sendMessage(message);
         break;
+      case "tellics":
+        let otherPlayer2 = this.clients[this._getPartner(playerIdx)];
+        if (message.startsWith("tellics ptell") && message.trim().length > "tellics ptell ".length)
+          otherPlayer2.sendMessage(message.trim().substr(7));
+        break;
       case "move":
         if (this.turns[board] != playerColor) {
           client.sendMessage("Error (not on the move): "+message);
