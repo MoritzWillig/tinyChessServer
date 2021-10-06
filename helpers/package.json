@@ -10,6 +10,6 @@
   "author": "Moritz Willig",
   "license": "MIT",
   "dependencies": {
-    "ws": "^7.0.0"
+    "ws": "^7.4.6"
   }
 }
