@@ -13,7 +13,7 @@
   "author": "Moritz Willig",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.16.4",
+    "express": "^4.18.2",
     "ws": "^7.4.6"
   }
 }
